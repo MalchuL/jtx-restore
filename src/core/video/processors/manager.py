@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Optional, Union, Any, Dict, Callable
 
 from src.core.video.processors.base import FrameProcessor
-from src.core.video.processors.frame import ProcessorFrame
+from src.core.video.processors.frame import ProcessedFrame
 
 
 
@@ -50,7 +50,7 @@ class BatchProcessingManager:
         if self.processor.requires_initialization and not self.processor.is_initialized:
             self.processor.initialize()
         
-    def process_frames(self, frames: List[ProcessorFrame]) -> List[ProcessorFrame]:
+    def process_frames(self, frames: List[ProcessedFrame]) -> List[ProcessedFrame]:
         """Process a batch of frames using the configured processor.
         
         Args:
@@ -69,7 +69,7 @@ class BatchProcessingManager:
             # Process in parallel with threading
             return self._process_frames_threaded(frames)
     
-    def _process_frames_sequential(self, frames: List[ProcessorFrame]) -> List[ProcessorFrame]:
+    def _process_frames_sequential(self, frames: List[ProcessedFrame]) -> List[ProcessedFrame]:
         """Process frames sequentially without threading.
         
         Args:
@@ -87,7 +87,7 @@ class BatchProcessingManager:
             
         return processed_frames
     
-    def _process_frames_threaded(self, frames: List[ProcessorFrame]) -> List[ProcessorFrame]:
+    def _process_frames_threaded(self, frames: List[ProcessedFrame]) -> List[ProcessedFrame]:
         """Process frames in parallel using threading.
         
         Args:
@@ -128,7 +128,7 @@ class BatchProcessingManager:
         # Ensure frames are returned in the original order
         return [processed_frames_dict[frame.frame_id] for frame in frames]
     
-    def _process_single_frame(self, frame: ProcessorFrame) -> ProcessorFrame:
+    def _process_single_frame(self, frame: ProcessedFrame) -> ProcessedFrame:
         """Process a single frame with the processor.
         
         This is a helper method for threaded processing.

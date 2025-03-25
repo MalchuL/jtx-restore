@@ -9,7 +9,7 @@ from typing import Dict, Any, Optional
 import numpy as np
 
 
-class ProcessorFrame:
+class ProcessedFrame:
     """
     Container for video frames with associated metadata.
     

@@ -9,7 +9,7 @@ All processors work with frames in RGB format, regardless of the input source.
 import abc
 from typing import List, Optional, Sequence
 
-from src.core.video.processors.frame import ProcessorFrame
+from src.core.video.processors.frame import ProcessedFrame
 
 
 class FrameProcessor(abc.ABC):
@@ -50,7 +50,7 @@ class FrameProcessor(abc.ABC):
         self._is_initialized = True
 
     @abc.abstractmethod
-    def process_frame(self, frame: ProcessorFrame) -> ProcessorFrame:
+    def process_frame(self, frame: ProcessedFrame) -> ProcessedFrame:
         """Process a single frame.
 
         Args:
@@ -61,7 +61,7 @@ class FrameProcessor(abc.ABC):
         """
         pass
 
-    def process_batch(self, frames: Sequence[ProcessorFrame]) -> List[ProcessorFrame]:
+    def process_batch(self, frames: Sequence[ProcessedFrame]) -> List[ProcessedFrame]:
         """Process a batch of frames.
 
         The default implementation processes frames sequentially.
@@ -86,7 +86,7 @@ class FrameProcessor(abc.ABC):
 
         return results
 
-    def __call__(self, frame: ProcessorFrame) -> ProcessorFrame:
+    def __call__(self, frame: ProcessedFrame) -> ProcessedFrame:
         """Process a single frame (callable interface).
 
         Args:

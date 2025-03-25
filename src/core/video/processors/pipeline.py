@@ -8,7 +8,7 @@ frame processors together. All processors work with frames in RGB format.
 
 from typing import Dict, List, Optional, Sequence, Union
 
-from src.core.video.processors.frame import ProcessorFrame
+from src.core.video.processors.frame import ProcessedFrame
 from src.core.video.processors.base import FrameProcessor
 
 
@@ -75,7 +75,7 @@ class ProcessorPipeline(FrameProcessor):
             if processor.is_stateful:
                 processor.reset_state()
     
-    def process_frame(self, frame: ProcessorFrame) -> ProcessorFrame:
+    def process_frame(self, frame: ProcessedFrame) -> ProcessedFrame:
         """Process a single frame through the pipeline.
         
         Args:
@@ -89,7 +89,7 @@ class ProcessorPipeline(FrameProcessor):
             result = processor.process_frame(result)
         return result
     
-    def process_batch(self, frames: Sequence[ProcessorFrame]) -> List[ProcessorFrame]:
+    def process_batch(self, frames: Sequence[ProcessedFrame]) -> List[ProcessedFrame]:
         """Process a batch of frames through the pipeline.
         
         Args:
