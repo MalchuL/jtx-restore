@@ -1,0 +1,13 @@
+.history
+.pytest_cache
+__pycache__
+.DS_Store
+.idea
+.vscode
+.venv
+.mypy_cache
+.ruff_cache
+.cache
+.env
+.env.local
+*.mp4

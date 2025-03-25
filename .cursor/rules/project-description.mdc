@@ -1,0 +1,66 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+**Project Description: Classic Cartoon Restoration Suite (CCRS)**  
+
+**Objective**  
+The Classic Cartoon Restoration Suite (CCRS) is an open-source software solution designed to revitalize vintage cartoons by applying advanced video and audio enhancement techniques. The project aims to preserve cultural heritage, improve accessibility, and breathe new life into aging media for modern audiences.  
+
+---
+
+### **Key Features**  
+**Video Enhancement Pipeline**  
+1. **AI-Driven Upscaling**: Increase resolution (e.g., 480p to 4K) using GANs (Generative Adversarial Networks) while preserving hand-drawn art styles.  
+2. **Noise Reduction**: Remove film grain, scratches, and dust with hybrid temporal-spatial denoising algorithms.  
+3. **Color Restoration**: Correct faded/bleached colors via histogram analysis and AI-based palette prediction.  
+4. **Frame Rate Smoothing**: Use optical flow-based interpolation (e.g., DAIN) to boost FPS for fluid motion.  
+5. **Stabilization**: Fix jitter and misaligned frames with motion estimation techniques.  
+6. **Artifact Repair**: AI inpainting (e.g., NVIDIA Canvas) to reconstruct damaged/corrupted frames.  
+7. **Aspect Ratio Adjustment**: Auto-detect and convert legacy ratios (4:3) to widescreen (16:9) without distortion.  
+
+**Audio Enhancement Pipeline**  
+1. **Noise Removal**: Isolate dialogue/music using ML models (e.g., Adobe Enhance Speech).  
+2. **Dynamic Range Compression**: Balance audio levels for clarity.  
+3. **Mono-to-Stereo Conversion**: Spatial audio upmixing for immersive playback.  
+4. **Fidelity Restoration**: Remove pops, hisses, and distortions via spectral editing.  
+
+---
+
+### **Applications**  
+- **Archival Preservation**: Digitize and restore decaying film reels/VHS tapes for museums (e.g., Smithsonian, animation archives).  
+- **Streaming Platforms**: Offer remastered classics on services like Netflix or Disney+.  
+- **Education**: Enable frame-by-frame analysis of animation techniques for film schools.  
+- **Content Creators**: Provide high-quality素材 for documentaries, YouTube retrospectives, or VR/AR experiences.  
+- **Home Media**: Convert personal collections into Blu-ray/UHD formats.  
+
+---
+
+### **Technical Directions**  
+1. **Research & Development**:  
+   - Benchmark tools like Topaz Video AI, FFmpeg, and ESRGAN for performance.  
+   - Train custom ML models on cartoon-specific datasets to avoid overfitting to live-action data.  
+
+2. **Modular Design**:  
+   - Decouple video/audio processing into Docker containers for scalability.  
+   - Integrate with popular editors (Blender, Premiere Pro) via plugins.  
+
+3. **Collaboration & Testing**:  
+   - Partner with animation studios (e.g., Warner Bros. Classic Library) for beta testing.  
+   - Use crowdsourced quality control (e.g., user feedback loops for artifact detection).  
+
+4. **User Experience**:  
+   - Develop a GUI with presets (e.g., "Fleischer Studios Style") and manual tweaking sliders.  
+   - Enable batch processing for large archives.  
+
+5. **Ethical Considerations**:  
+   - Add watermarking to distinguish restored versions from originals.  
+   - Prioritize authenticity—avoid "modernizing" art styles (e.g., retro black-and-white to color).  
+
+---
+
+**Impact**  
+CCRS bridges nostalgia and technology, ensuring classic animation remains accessible and engaging. By combining AI innovation with respect for original artistry, it empowers archivists, creators, and fans to safeguard cartoon history for future generations.  
+
+**Next Steps**: Seek grants from cultural heritage organizations, publish whitepapers on cartoon-specific ML models, and release a beta version for community testing.
