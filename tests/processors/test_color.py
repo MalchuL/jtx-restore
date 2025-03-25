@@ -10,6 +10,7 @@ import cv2
 from src.core.video.processors.enhancers.color.color import ColorCorrectionProcessor
 from src.core.video.processors.frame import ProcessedFrame
 
+raise NotImplementedError("Color correction processor is not implemented yet.")
 
 @pytest.fixture
 def sample_frame():

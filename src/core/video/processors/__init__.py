@@ -9,6 +9,7 @@ various enhancers and transformations.
 # Core processor classes
 from src.core.video.processors.frame import ProcessedFrame
 from src.core.video.processors.base import FrameProcessor
+from src.core.video.processors.pipeline import ProcessorPipeline
 
 # Import enhancers subpackage
 from src.core.video.processors.enhancers import ColorCorrectionProcessor, DenoiseProcessor, UpscaleProcessor
@@ -18,6 +19,7 @@ __all__ = [
     'ProcessedFrame',
     # Core processor classes
     'FrameProcessor',
+    'ProcessorPipeline',
     # Enhancers
     'ColorCorrectionProcessor',
     'DenoiseProcessor',

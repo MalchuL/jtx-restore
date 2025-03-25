@@ -10,7 +10,7 @@ import cv2
 from src.core.video.processors.enhancers.upscale.scaling import UpscaleProcessor
 from src.core.video.processors.frame import ProcessedFrame
 
-
+raise NotImplementedError("Upscaling processor is not implemented yet.")
 @pytest.fixture
 def sample_frame():
     """Create a sample frame for testing."""

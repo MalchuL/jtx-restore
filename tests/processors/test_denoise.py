@@ -10,6 +10,7 @@ import cv2
 from src.core.video.processors.enhancers.denoise.denoising import DenoiseProcessor
 from src.core.video.processors.frame import ProcessedFrame
 
+raise NotImplementedError("Denoising processor is not implemented yet.")
 
 @pytest.fixture
 def sample_frame():
