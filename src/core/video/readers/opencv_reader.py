@@ -111,42 +111,6 @@ class OpenCVVideoReader(VideoReader):
             return frame_rgb
         return None
 
-    def read_frames(self, count: int) -> List[FrameType]:
-        """Read multiple frames from the video."""
-        if not self.is_open:
-            self.open()
-
-        frames = []
-        for _ in range(count):
-            frame = self.read_frame()
-            if frame is None:
-                break
-            frames.append(frame)
-
-        return frames
-
-    def yield_frames(self, chunk_size: int) -> Iterator[List[FrameType]]:
-        """Yield chunks of frames from the video.
-
-        Args:
-            chunk_size: Number of frames to include in each chunk
-        """
-        if not self.is_open:
-            self.open()
-
-        frames = []
-        while True:
-            frame = self.read_frame()
-            if frame is None:
-                # End of video reached
-                if frames:  # Yield any remaining frames
-                    yield frames
-                break
-
-            frames.append(frame)
-            if len(frames) >= chunk_size:
-                yield frames
-                frames = []
 
     def get_frame_at_timestamp(self, timestamp_sec: float) -> Optional[FrameType]:
         """Get the frame at a specific timestamp."""

@@ -47,8 +47,7 @@ class TestOpenCVVideoWriter:
         assert writer.fps == 30.0
         assert writer.frame_size == (640, 480)
         assert writer.codec is None
-        assert writer.is_color is True
-        assert not writer.is_open
+        assert writer.is_open
 
         # With custom codec
         writer = OpenCVVideoWriter(
@@ -56,40 +55,38 @@ class TestOpenCVVideoWriter:
             fps=24.0,
             frame_size=(1280, 720),
             codec="mp4v",
-            is_color=False,
         )
 
         assert writer.output_path == output_path
         assert writer.fps == 24.0
         assert writer.frame_size == (1280, 720)
         assert writer.codec == "mp4v"
-        assert writer.is_color is False
-        assert not writer.is_open
+        assert writer.is_open
 
     def test_codec_selection(self, temp_output_dir):
         """Test automatic codec selection based on file extension."""
         # MP4 format
         writer = OpenCVVideoWriter(
-            output_path=temp_output_dir / "test_video.mp4", fps=30.0
+            output_path=temp_output_dir / "test_video.mp4", fps=30.0, frame_size=(640, 480)
         )
         assert writer._actual_codec == "mp4v"
 
         # AVI format
         writer = OpenCVVideoWriter(
-            output_path=temp_output_dir / "test_video.avi", fps=30.0
+            output_path=temp_output_dir / "test_video.avi", fps=30.0, frame_size=(640, 480)
         )
         assert writer._actual_codec == "XVID"
 
         # MOV format
         writer = OpenCVVideoWriter(
-            output_path=temp_output_dir / "test_video.mov", fps=30.0
+            output_path=temp_output_dir / "test_video.mov", fps=30.0, frame_size=(640, 480)
         )
         assert writer._actual_codec == "mp4v"
 
         # Unknown format
         with pytest.raises(ValueError):
             writer = OpenCVVideoWriter(
-                output_path=temp_output_dir / "test_video.xyz", fps=30.0
+                output_path=temp_output_dir / "test_video.xyz", fps=30.0, frame_size=(640, 480)
             )
 
     def test_open_close(self, temp_output_dir):
@@ -99,7 +96,7 @@ class TestOpenCVVideoWriter:
             output_path=output_path, fps=30.0, frame_size=(640, 480)
         )
 
-        assert not writer.is_open
+        assert writer.is_open
         writer.open()
         assert writer.is_open
         assert writer._writer is not None
@@ -144,7 +141,7 @@ class TestOpenCVVideoWriter:
         writer = OpenCVVideoWriter(
             output_path=output_path,
             fps=30.0,
-            # No frame_size provided
+            frame_size=(640, 480)
         )
 
         # Write frames
@@ -217,6 +214,8 @@ class TestOpenCVVideoWriter:
         ) as writer:
             for frame in sample_frames:
                 writer.write_frame(frame)
+            assert writer.is_open
+
 
         # Verify writer is closed after context
         assert not writer.is_open

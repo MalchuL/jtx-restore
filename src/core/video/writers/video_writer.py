@@ -21,8 +21,7 @@ class VideoWriter(ABC, Generic[T]):
                  output_path: Union[str, Path], 
                  fps: float,
                  frame_size: Optional[Tuple[int, int]] = None,
-                 codec: Optional[str] = None,
-                 is_color: bool = True):
+                 codec: Optional[str] = None):
         """Initialize the video writer.
         
         Args:
@@ -32,14 +31,12 @@ class VideoWriter(ABC, Generic[T]):
                 or None to determine from first frame. Defaults to None.
             codec (Optional[str], optional): Codec to use for encoding, or None for auto-selection.
                 Defaults to None.
-            is_color (bool, optional): Whether the video contains color frames. Defaults to True.
         """
         self.logger = logging.getLogger(self.__class__.__name__)
         self.output_path = Path(output_path)
         self.fps = fps
         self.frame_size = frame_size
         self.codec = codec
-        self.is_color = is_color
         self._is_open = False
         
     @property
@@ -132,4 +129,4 @@ class VideoWriter(ABC, Generic[T]):
         Returns:
             str: The codec used for encoding
         """
-        pass 
+        pass
