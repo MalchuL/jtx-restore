@@ -46,7 +46,7 @@ class TestOpenCVVideoWriter:
         assert writer.output_path == output_path
         assert writer.fps == 30.0
         assert writer.frame_size == (640, 480)
-        assert writer.codec is None
+        assert writer.codec == "mp4v"
         assert writer.is_open
 
         # With custom codec
@@ -69,19 +69,19 @@ class TestOpenCVVideoWriter:
         writer = OpenCVVideoWriter(
             output_path=temp_output_dir / "test_video.mp4", fps=30.0, frame_size=(640, 480)
         )
-        assert writer._actual_codec == "mp4v"
+        assert writer.codec == "mp4v"
 
         # AVI format
         writer = OpenCVVideoWriter(
             output_path=temp_output_dir / "test_video.avi", fps=30.0, frame_size=(640, 480)
         )
-        assert writer._actual_codec == "XVID"
+        assert writer.codec == "XVID"
 
         # MOV format
         writer = OpenCVVideoWriter(
             output_path=temp_output_dir / "test_video.mov", fps=30.0, frame_size=(640, 480)
         )
-        assert writer._actual_codec == "mp4v"
+        assert writer.codec == "mp4v"
 
         # Unknown format
         with pytest.raises(ValueError):

@@ -191,7 +191,7 @@ class ImageWriter(VideoWriter[FrameType]):
             self._is_open = False
 
     @property
-    def output_codec(self) -> str:
+    def codec(self) -> str:
         """Get the codec that was actually used for encoding.
 
         Returns:

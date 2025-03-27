@@ -36,7 +36,7 @@ class VideoWriter(ABC, Generic[T]):
         self.output_path = Path(output_path)
         self.fps = fps
         self.frame_size = frame_size
-        self.codec = codec
+        self._codec = codec
         self._is_open = False
         
     @property
@@ -123,7 +123,7 @@ class VideoWriter(ABC, Generic[T]):
     
     @property
     @abstractmethod
-    def output_codec(self) -> str:
+    def codec(self) -> str:
         """Get the codec that was actually used for encoding.
         
         Returns:

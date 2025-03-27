@@ -54,14 +54,12 @@ class OpenCVVideoWriter(VideoWriter):
         os.makedirs(self.output_path.parent, exist_ok=True)
         
         # Determine codec if not provided
-        if self.codec is None:
-            self._actual_codec = self._select_codec()
+        if self._codec is None:
+            self._codec = self._select_codec()
         else:
             # Verify if the requested codec is available
-            if self._is_codec_available(self.codec):
-                self._actual_codec = self.codec
-            else:
-                raise ValueError(f"Codec '{self.codec}' is not available on this system")
+            if not self._is_codec_available(self._codec):
+                raise ValueError(f"Codec '{self._codec}' is not available on this system")
         
         self.resize_frames = resize_frames
         # Initialize the video writer
@@ -127,7 +125,7 @@ class OpenCVVideoWriter(VideoWriter):
                 height -= 1
             self.frame_size = (width, height)
             
-            fourcc = cv2.VideoWriter_fourcc(*self._actual_codec)
+            fourcc = cv2.VideoWriter_fourcc(*self.codec)
             self._writer = cv2.VideoWriter(
                 str(self.output_path),
                 fourcc,
@@ -137,7 +135,7 @@ class OpenCVVideoWriter(VideoWriter):
             )
 
             if not self._writer.isOpened():
-                raise IOError(f"Failed to open VideoWriter for {self.output_path} with codec {self._actual_codec}")
+                raise IOError(f"Failed to open VideoWriter for {self.output_path} with codec {self.codec}")
 
             self._is_open = True
 
@@ -196,10 +194,10 @@ class OpenCVVideoWriter(VideoWriter):
         self._writer.write(frame_bgr)
 
     @property
-    def output_codec(self) -> str:
+    def codec(self) -> str:
         """Get the codec that was actually used for encoding.
 
         Returns:
             str: The codec used for encoding
         """
-        return self._actual_codec
+        return self._codec
