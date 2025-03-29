@@ -65,3 +65,12 @@ class ProcessedFrame:
     def dtype(self):
         """Return the data type of the underlying frame data."""
         return self.data.dtype 
+    
+    def __repr__(self):
+        return f"ProcessedFrame(frame_id={self.frame_id}, shape={self.shape}, dtype={self.dtype})"
+    
+    def __str__(self):
+        return self.__repr__()
+    
+    def __eq__(self, other):
+        return self.frame_id == other.frame_id and np.array_equal(self.data, other.data)

@@ -14,15 +14,10 @@ from typing import Optional, Tuple, Union, Dict
 
 import numpy as np
 
+from src.core.video.errors import FFmpegNotInstalledError
 from src.core.video.writers.image_writer import ImageWriter
 from src.core.video.writers.video_writer import VideoWriter
 from src.core.video.types import FrameType
-
-
-class FFmpegNotInstalledError(Exception):
-    """Exception raised when FFmpeg is not installed."""
-
-    pass
 
 
 class FFmpegVideoWriter(VideoWriter[FrameType]):
