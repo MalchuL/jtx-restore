@@ -7,19 +7,51 @@ T = TypeVar("T")
 
 
 class FrameCutter(Generic[T]):
+    """A class that splits a sequence of frames into overlapping windows.
+
+    This class is designed to process video frames by creating overlapping windows
+    of frames, which is useful for frame interpolation and other temporal processing tasks.
+    It maintains a sliding window with configurable overlap and window sizes.
+
+    Attributes:
+        window_size (int): Total number of frames in each window.
+        overlap_size (int): Number of frames that overlap between consecutive windows.
+        begin_overlap (int): Number of frames to overlap at the beginning of processing.
+
+    Example:
+        >>> cutter = FrameCutter(window_size=4, overlap_size=2)
+        >>> frames = [frame1, frame2, frame3, frame4, frame5]
+        >>> for frame in frames:
+        ...     window = cutter(frame)
+        ...     if window:
+        ...         process_window(window)
+        >>> final_window = cutter(None)  # Process remaining frames
+
+    Args:
+        overlap_size (int): Number of frames to overlap between windows. Must be > 0 and < window_size.
+        window_size (int): Size of each window. Must be >= 1.
+        begin_overlap (Optional[int]): Number of frames to overlap at the start. If None,
+            defaults to (window_size - overlap_size) // 2.
+
+    Raises:
+        ValueError: If window_size < 1, overlap_size <= 0, overlap_size > window_size,
+            or begin_overlap > window_size - overlap_size.
+    """
+
     def __init__(
         self,
-        overlap_size: int = 1,
         window_size: int = 2,
+        overlap_size: Optional[int] = None,
         begin_overlap: Optional[int] = None,
     ):
-        self.overlap_size = overlap_size
-
         self.window_size = window_size
+        self.overlap_size = overlap_size
+        if self.overlap_size is None:
+            self.overlap_size = self.window_size
         if self.window_size < 1:
             raise ValueError("window must be at least 1")
         if self.overlap_size > self.window_size:
-            raise ValueError("overlap must be less than window - 1")
+            raise ValueError("overlap must be less or equal than window")
         if self.overlap_size <= 0:
             raise ValueError("overlap must be greater than 0")
         self.begin_overlap = begin_overlap
@@ -30,8 +62,13 @@ class FrameCutter(Generic[T]):
 
         self._processed_frames = 0
         self._frames: Deque[T] = deque()
-        self._padded = False  # Is inintial padding applied. Used for begin overlap.
-
+        self._padded = False  # Is initial padding applied. Used for begin overlap.
+        
+        # When we have None frame, we need to check if we finished processing
+        # We need to check if we have enough frames to return
+        # Because we can have situation when we have less frames than window size
+        # And we need to pad the last frame
+        self._remaining_frames = 0
         self._is_finish = False
 
         """
@@ -44,6 +81,16 @@ class FrameCutter(Generic[T]):
         """
 
     def _pad(self, frame: T, left_padding: int = 0, right_padding: int = 0) -> T:
+        """Add padding frames to the buffer.
+
+        Args:
+            frame (T): The frame to use for padding.
+            left_padding (int): Number of frames to pad on the left.
+            right_padding (int): Number of frames to pad on the right.
+
+        Note:
+            The buffer size is maintained at window_size by removing excess frames.
+        """
         if left_padding > 0:
             for _ in range(left_padding):
                 self._frames.appendleft(frame)
@@ -56,51 +103,82 @@ class FrameCutter(Generic[T]):
                     self._frames.popleft()
 
     def _add_frame(self, frame: T) -> List[T]:
-        self._pad(
-            frame, right_padding=1
-        )  # Add one frame to the end of the buffer similar to padding
+        """Add a new frame to the buffer.
+
+        Args:
+            frame (T): The frame to add.
+
+        Note:
+            This method adds one frame to the end of the buffer and maintains
+            the window size by removing excess frames.
+        """
+        self._pad(frame, right_padding=1)
 
     def process_frame(self, frame: Optional[T]) -> Optional[List[T]]:
+        """Process a single frame and return a window if available.
+
+        Args:
+            frame (Optional[T]): The frame to process. If None, indicates end of processing.
+
+        Returns:
+            Optional[List[T]]: A list of frames forming a window if available, None otherwise.
+
+        Raises:
+            RuntimeError: If called after processing is finished.
+        """
         if not self._padded:
             self._pad(frame, self.begin_overlap)
             self._processed_frames += self.begin_overlap
             self._padded = True
             # Pads frames to make initial overlap
 
-        # If frame is None, it means that we have reached the end of the video
-        # We need to pad the last frame to make it the same size as the window
-        # And return frames that we doesnt see in buffer
-        if frame is None:
-            self._pad(
-                self._frames[-1],
-                right_padding=self.window_size - self._processed_frames,
-            )
-            self._processed_frames = self.window_size
-            self._is_finish = True
-            return list(self._frames)
+        if frame is not None:
+            self._add_frame(frame)
+            self._processed_frames += 1
+        else:
+            # If frame is None, it means that we have reached the end of the video
+            # We need to pad the last frame to make it the same size as the window
+            # And return frames that we doesnt see in buffer
+            
+            # If _processed_frames is less than window size, we need to pad the last frame
+            # But if _processed_frames is at start of processing, we already return all frames
+            if not self._is_finish:
+                # Number of frames that we add but window size is not reached
+                remaining_frames = self._processed_frames - (self.window_size - self.overlap_size)
+                # Number of frames that remains at right side of window that we must process at the end
+                not_processed_frames = self.window_size - self.overlap_size - self.begin_overlap
+                self._remaining_frames = remaining_frames + not_processed_frames
+                self._is_finish = True
 
-        if self._is_finish:
-            raise RuntimeError("Frame cutter is finished")
-
-        self._add_frame(frame)
-        self._processed_frames += 1
+            if self._remaining_frames > 0:
+                self._pad(self._frames[-1], right_padding=self.window_size - self._processed_frames)
+                self._processed_frames = self.window_size
+                self._remaining_frames -= self.overlap_size
+            else:
+                return None
 
         if (
             self._processed_frames >= self.window_size
             and len(self._frames) >= self.window_size
         ):
-            self._processed_frames = (
-                # Count of frames that we have for new window
-                # This value doesn't depend on begin overlap
-                # Because we only need to offset at the beggining of processing
-                # After that we can just take offset
-                # Because we always offsets on window size - overlap size
-                self.window_size
-                - self.overlap_size
-            )  # Reset processed frames to begin overlap
+            # Count of frames that we have for new window
+            # This value doesn't depend on begin overlap
+            # Because we only need to offset at the beggining of processing
+            # After that we can just take offset
+            # Because we always offsets on window size - overlap size
+
+            self._processed_frames = self.window_size - self.overlap_size
 
             frames = list(self._frames)
             return list(frames)
 
     def __call__(self, frame: T) -> Optional[List[T]]:
+        """Make the FrameCutter callable.
+
+        Args:
+            frame (T): The frame to process.
+
+        Returns:
+            Optional[List[T]]: A window of frames if available, None otherwise.
+        """
         return self.process_frame(frame)
