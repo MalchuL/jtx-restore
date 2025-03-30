@@ -137,8 +137,6 @@ class OpenCVVideoWriter(VideoWriter):
             if not self._writer.isOpened():
                 raise IOError(f"Failed to open VideoWriter for {self.output_path} with codec {self.codec}")
 
-            self._is_open = True
-
         except Exception as e:
             raise IOError(f"Error initializing VideoWriter: {e}")
 
@@ -147,7 +145,9 @@ class OpenCVVideoWriter(VideoWriter):
         
         This method is a no-op since the writer is initialized in __init__.
         """
-        pass
+        if not self._is_open:
+            self._initialize_writer()
+            self._is_open = True
 
     def close(self) -> None:
         """Close the writer and finalize the video file."""

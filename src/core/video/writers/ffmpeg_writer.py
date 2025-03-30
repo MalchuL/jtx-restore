@@ -147,7 +147,6 @@ Or using Scoop:
         self.ffmpeg_args = ffmpeg_args or []
         self._temp_dir = Path(temp_dir) if temp_dir else None
         self._image_writer = None
-        self._is_initialized = False
         
         self._image_format = image_format
 
@@ -246,8 +245,6 @@ Or using Scoop:
 
     def _initialize(self) -> None:
         """Initialize the writer and create temporary directory if needed."""
-        if self._is_initialized:
-            return
 
         if self._temp_dir is None:
             self._temp_dir = TemporaryDirectory()
@@ -255,6 +252,7 @@ Or using Scoop:
         else:
             self._temp_dir_path = self._temp_dir
 
+        self.logger.info(f"Initializing image writer with output path: {self._temp_dir_path}")
         # Create image writer
         self._image_writer = ImageWriter(
             output_path=self._temp_dir_path,
@@ -265,11 +263,9 @@ Or using Scoop:
             saving_freq=1000,  # Save metadata more frequently
         )
 
-        self._is_initialized = True
-
     def open(self) -> None:
         """Open the writer and prepare for writing frames."""
-        if not self._is_initialized:
+        if not self._is_open:
             self._initialize()
 
         self._image_writer.open()
@@ -291,7 +287,6 @@ Or using Scoop:
             self._temp_dir.cleanup()
 
         self._is_open = False
-        self._is_initialized = False
 
     def _convert_to_video(self) -> None:
         """Convert image sequence to video using FFmpeg."""

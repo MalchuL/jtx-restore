@@ -11,3 +11,6 @@ __pycache__
 .env
 .env.local
 *.mp4
+output/
+input/
+output_directory/

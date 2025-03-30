@@ -62,13 +62,16 @@ class ImageWriter(VideoWriter[FrameType]):
         self.current_frame = 0
         self.metadata_list: List[Dict[str, Any]] = []
         self.saving_freq = saving_freq
-        # Create output directories if they don't exist
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-        self.images_dir.mkdir(parents=True, exist_ok=True)
+        
 
     def open(self) -> None:
         """Open the writer and prepare for writing frames."""
+        if not self._is_open:
+            # Create output directories if they don't exist
+            self.output_dir.mkdir(parents=True, exist_ok=True)
+            self.images_dir.mkdir(parents=True, exist_ok=True)
         self._is_open = True
+
 
     def _get_frame_path(self, frame_id: int) -> Path:
         """Generate the path for a frame file.

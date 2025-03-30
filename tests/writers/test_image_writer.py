@@ -41,7 +41,7 @@ def test_writer_initialization():
         
         # Check directories were created
         assert Path(temp_dir).exists()
-        assert (Path(temp_dir) / "images").exists()
+        assert not (Path(temp_dir) / "images").exists()
         
         # Check writer state
         assert writer.format == "png"

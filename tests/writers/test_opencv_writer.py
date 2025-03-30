@@ -47,7 +47,7 @@ class TestOpenCVVideoWriter:
         assert writer.fps == 30.0
         assert writer.frame_size == (640, 480)
         assert writer.codec == "mp4v"
-        assert writer.is_open
+        assert not writer.is_open
 
         # With custom codec
         writer = OpenCVVideoWriter(
@@ -61,7 +61,7 @@ class TestOpenCVVideoWriter:
         assert writer.fps == 24.0
         assert writer.frame_size == (1280, 720)
         assert writer.codec == "mp4v"
-        assert writer.is_open
+        assert not writer.is_open
 
     def test_codec_selection(self, temp_output_dir):
         """Test automatic codec selection based on file extension."""
@@ -96,7 +96,7 @@ class TestOpenCVVideoWriter:
             output_path=output_path, fps=30.0, frame_size=(640, 480)
         )
 
-        assert writer.is_open
+        assert not writer.is_open
         writer.open()
         assert writer.is_open
         assert writer._writer is not None
