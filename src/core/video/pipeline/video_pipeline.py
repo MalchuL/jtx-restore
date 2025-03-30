@@ -14,7 +14,7 @@ from src.core.video.readers.video_reader import VideoMetadata, VideoReader
 from src.core.video.writers.video_writer import VideoWriter
 from src.core.video.processors.processor import FrameProcessor
 from src.core.video.types import FrameType
-from src.core.utils.progress import ProgressBar
+from src.core.utils.progress_interface import ProgressInterface
 
 
 class DefaultVideoPipeline:
@@ -44,7 +44,7 @@ class DefaultVideoPipeline:
         self.processors = processors or []
         self.reader: Optional[VideoReader] = None
         self.writer: Optional[VideoWriter] = None
-        self.progress_bar: Optional[ProgressBar] = None
+        self.progress_bar: Optional[ProgressInterface] = None
 
         if batch_size <= 0:
             raise ValueError("Batch size must be greater than 0")
@@ -77,7 +77,7 @@ class DefaultVideoPipeline:
         """
         pass
 
-    def _create_progress_bar(self, total_frames: int) -> ProgressBar:
+    def _create_progress_bar(self, total_frames: int) -> ProgressInterface:
         """Create a progress bar instance.
 
         This method can be overridden by child classes to customize the progress bar.
@@ -91,9 +91,10 @@ class DefaultVideoPipeline:
             total_frames: Total number of frames to process.
 
         Returns:
-            ProgressBar: A progress bar instance.
+            ProgressInterface: A progress bar instance.
         """
-        progress = ProgressBar(
+        from src.core.utils.rich.progress import RichProgressBar
+        progress = RichProgressBar(
             total=total_frames,
             description="Processing video",
             show_time=True,
@@ -101,19 +102,10 @@ class DefaultVideoPipeline:
             show_eta=True,
             show_count=True,
             show_percentage=True,
-            refresh_per_second=10,
+            refresh_per_second=4,  # Reduced refresh rate
             transient=False,
             expand=True
         )
-        
-        # Add initial metadata to stats
-        if self.reader:
-            metadata = self.reader.metadata
-            progress.add_stat("Resolution", f"{metadata.width}x{metadata.height}")
-            progress.add_stat("FPS", f"{metadata.fps:.2f}")
-            progress.add_stat("Duration", f"{metadata.duration:.2f}s")
-            progress.add_stat("Codec", metadata.codec)
-        
         return progress
 
     def update_metadata(self, metadata: VideoMetadata) -> VideoMetadata:
@@ -146,7 +138,6 @@ class DefaultVideoPipeline:
         # Create progress bar
         total_frames = int(metadata.frame_count)
         self.progress_bar = self._create_progress_bar(total_frames)
-        self.progress_bar.start()
         
         self.logger.info(
             f"Pipeline configured for {metadata.width}x{metadata.height} "
@@ -161,24 +152,21 @@ class DefaultVideoPipeline:
         frame_count = 0
         self.logger.info("Starting video processing...")
 
-        while True:
-            frame = self.reader.read_frame()
-            if frame is None:
-                break
+        with self.progress_bar:
+            while True:
+                frame = self.reader.read_frame()
+                if frame is None:
+                    break
 
-            # Apply all processors in sequence
-            processed_frame = ProcessedFrame(frame, frame_id=frame_count)
-            for processor in self.processors:
-                processed_frame = processor.process_frame(processed_frame)
-            self.writer.write_frame(processed_frame.data)
-            frame_count += 1
+                # Apply all processors in sequence
+                processed_frame = ProcessedFrame(frame, frame_id=frame_count)
+                for processor in self.processors:
+                    processed_frame = processor.process_frame(processed_frame)
+                self.writer.write_frame(processed_frame.data)
+                frame_count += 1
 
-            # Update progress bar
-            if self.progress_bar:
-                self.progress_bar.update()
-                self.progress_bar.add_stat("Frames Processed", frame_count)
-                self.progress_bar.add_stat("Processing Speed", f"{frame_count / self.progress_bar.get_elapsed_time():.2f} fps")
-                self.progress_bar.update_stats_panel()
+                # Update progress bar
+                self.progress_bar.update(advance=1)
 
         self.logger.info(f"Completed processing {frame_count} frames")
 
