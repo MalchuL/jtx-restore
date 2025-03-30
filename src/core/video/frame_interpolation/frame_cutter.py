@@ -1,9 +1,12 @@
 from collections import deque
-from typing import Deque, List, Optional
+from typing import Deque, Generic, List, Optional, TypeVar
 from src.core.video.processors.frame import ProcessedFrame
 
 
-class FrameCutter:
+T = TypeVar("T")
+
+
+class FrameCutter(Generic[T]):
     def __init__(
         self,
         overlap_size: int = 1,
@@ -13,8 +16,8 @@ class FrameCutter:
         self.overlap_size = overlap_size
 
         self.window_size = window_size
-        if self.window_size < 2:
-            raise ValueError("window must be at least 2")
+        if self.window_size < 1:
+            raise ValueError("window must be at least 1")
         if self.overlap_size > self.window_size:
             raise ValueError("overlap must be less than window - 1")
         if self.overlap_size <= 0:
@@ -26,8 +29,10 @@ class FrameCutter:
             raise ValueError("begin overlap must be less than window - overlap")
 
         self._processed_frames = 0
-        self._frames: Deque[ProcessedFrame] = deque()
+        self._frames: Deque[T] = deque()
         self._padded = False  # Is inintial padding applied. Used for begin overlap.
+
+        self._is_finish = False
 
         """
         In example we'll have 12 frames, we already process
@@ -38,28 +43,44 @@ class FrameCutter:
         00001122211100  # 12 frames, 8 window size, 3 overlap, 2 begin overlap (position start from 0)
         """
 
-    def _pad(
-        self, frame: ProcessedFrame, left_padding: int = 0, right_padding: int = 0
-    ) -> ProcessedFrame:
+    def _pad(self, frame: T, left_padding: int = 0, right_padding: int = 0) -> T:
         if left_padding > 0:
             for _ in range(left_padding):
                 self._frames.appendleft(frame)
+                if len(self._frames) > self.window_size:
+                    self._frames.pop()
         if right_padding > 0:
             for _ in range(right_padding):
                 self._frames.append(frame)
+                if len(self._frames) > self.window_size:
+                    self._frames.popleft()
 
-    def _add_frame(self, frame: ProcessedFrame) -> List[ProcessedFrame]:
-        self._frames.append(frame)
-        if len(self._frames) > self.window_size:
-            self._frames.popleft()
-        return self._frames
+    def _add_frame(self, frame: T) -> List[T]:
+        self._pad(
+            frame, right_padding=1
+        )  # Add one frame to the end of the buffer similar to padding
 
-    def process_frame(self, frame: ProcessedFrame) -> Optional[List[ProcessedFrame]]:
+    def process_frame(self, frame: Optional[T]) -> Optional[List[T]]:
         if not self._padded:
             self._pad(frame, self.begin_overlap)
             self._processed_frames += self.begin_overlap
             self._padded = True
             # Pads frames to make initial overlap
+
+        # If frame is None, it means that we have reached the end of the video
+        # We need to pad the last frame to make it the same size as the window
+        # And return frames that we doesnt see in buffer
+        if frame is None:
+            self._pad(
+                self._frames[-1],
+                right_padding=self.window_size - self._processed_frames,
+            )
+            self._processed_frames = self.window_size
+            self._is_finish = True
+            return list(self._frames)
+
+        if self._is_finish:
+            raise RuntimeError("Frame cutter is finished")
 
         self._add_frame(frame)
         self._processed_frames += 1
@@ -74,11 +95,12 @@ class FrameCutter:
                 # Because we only need to offset at the beggining of processing
                 # After that we can just take offset
                 # Because we always offsets on window size - overlap size
-                self.window_size - self.overlap_size
+                self.window_size
+                - self.overlap_size
             )  # Reset processed frames to begin overlap
 
             frames = list(self._frames)
             return list(frames)
 
-    def __call__(self, frame: ProcessedFrame) -> Optional[List[ProcessedFrame]]:
+    def __call__(self, frame: T) -> Optional[List[T]]:
         return self.process_frame(frame)

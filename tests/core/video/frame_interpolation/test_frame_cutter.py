@@ -27,15 +27,15 @@ class TestFrameCutter:
 
     def test_invalid_initialization(self):
         """Test that invalid parameters raise appropriate errors."""
-        with pytest.raises(ValueError, match="window must be at least 2"):
-            FrameCutter(window_size=1)
+        with pytest.raises(ValueError, match="window must be at least 1"):
+            FrameCutter(window_size=0)
 
 
 
     def test_frame_accumulation(self):
         """Test that frames are properly accumulated in the buffer."""
         ws = 4
-        cutter = FrameCutter(window_size=ws, overlap_size=3, begin_overlap=1)
+        cutter = FrameCutter[ProcessedFrame](window_size=ws, overlap_size=2, begin_overlap=1)
         
         frames = [create_num_frame(i) for i in range(10)]
         for frame in frames:
@@ -43,6 +43,8 @@ class TestFrameCutter:
             if out is not None:
                 assert len(out) == ws
                 print(out)
+        out = cutter(None)
+        print("last",out)
         print(cutter._frames)
        # assert cutter._frames == frames
     
