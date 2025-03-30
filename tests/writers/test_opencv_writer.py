@@ -163,6 +163,7 @@ class TestOpenCVVideoWriter:
             output_path=output_path,
             fps=30.0,
             frame_size=(320, 240),  # Smaller than our sample frames
+            resize_frames=True
         )
 
         # Create one larger frame

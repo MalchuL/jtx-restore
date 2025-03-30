@@ -29,7 +29,7 @@ class OpenCVVideoWriter(VideoWriter):
                  fps: float,
                  frame_size: Optional[Tuple[int, int]],
                  codec: Optional[str] = None,
-                 resize_frames: bool = True):
+                 resize_frames: bool = False):
         """Initialize the OpenCV video writer.
 
         Args:
