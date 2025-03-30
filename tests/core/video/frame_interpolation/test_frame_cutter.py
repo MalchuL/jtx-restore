@@ -22,8 +22,8 @@ class TestFrameCutter:
 
     def test_initialization(self):
         """Test proper initialization of FrameCutter with valid parameters."""
-        cutter = FrameCutter(overlap_size=1, window_size=3)
-        assert cutter.overlap_size == 1
+        cutter = FrameCutter(non_overlap_size=1, window_size=3)
+        assert cutter.non_overlap_size == 1
         assert cutter.window_size == 3
         assert len(cutter._frames) == 0
 
@@ -32,45 +32,40 @@ class TestFrameCutter:
         with pytest.raises(ValueError, match="window must be at least 1"):
             FrameCutter(window_size=0)
         
-        with pytest.raises(ValueError, match="overlap must be greater than 0"):
-            FrameCutter(overlap_size=0, window_size=3)
+        with pytest.raises(ValueError, match="non_overlap must be greater than 0"):
+            FrameCutter(non_overlap_size=0, window_size=3)
         
-        with pytest.raises(ValueError, match="overlap must be less or equal than window"):
-            FrameCutter(overlap_size=4, window_size=3)
+        with pytest.raises(ValueError, match="non_overlap must be less or equal than window"):
+            FrameCutter(non_overlap_size=4, window_size=3)
         
-        with pytest.raises(ValueError, match="begin overlap must be less than window - overlap"):
-            FrameCutter(overlap_size=1, window_size=3, begin_overlap=3)
+        with pytest.raises(ValueError, match="begin_non_overlap must be less than window - non_overlap"):
+            FrameCutter(non_overlap_size=1, window_size=3, begin_non_overlap=3)
 
     @pytest.mark.parametrize("range_size", [6, 7, 8, 9, 10])
     @pytest.mark.parametrize("window_size", [1, 2, 3, 4, 5, 6])
-    @pytest.mark.parametrize("overlap_size", [None, 1, 2, 3, 4, 5, 6])
-    @pytest.mark.parametrize("begin_overlap", [None, 0, 1,  2, 3, 4, 5, 6])
-    def test_automatic_cutter(self, range_size, window_size, overlap_size, begin_overlap):
+    @pytest.mark.parametrize("non_overlap_size", [None, 1, 2, 3, 4, 5, 6])
+    @pytest.mark.parametrize("begin_non_overlap", [None, 0, 1,  2, 3, 4, 5, 6])
+    def test_automatic_cutter(self, range_size, window_size, non_overlap_size, begin_non_overlap):
         # 2. All frames without overlap at center
-        if overlap_size is not None and overlap_size > window_size:
+        if non_overlap_size is not None and non_overlap_size > window_size:
             return
-        if begin_overlap is not None and overlap_size is not None and begin_overlap > window_size - overlap_size:
+        if begin_non_overlap is not None and non_overlap_size is not None and begin_non_overlap > window_size - non_overlap_size:
             return
-        if begin_overlap not in [None, 0] and overlap_size is None:
+        if begin_non_overlap not in [None, 0] and non_overlap_size is None:
             return
-        windows = self.infer_cutter(range_size=range_size, window_size=window_size, overlap_size=overlap_size, begin_overlap=begin_overlap)
+        windows = self.infer_cutter(range_size=range_size, window_size=window_size, non_overlap_size=non_overlap_size, begin_non_overlap=begin_non_overlap)
         # Assign concrete values
-        if overlap_size is None:
-            overlap_size = window_size
-        if begin_overlap is None:
-            begin_overlap = (window_size - overlap_size) // 2
+        if non_overlap_size is None:
+            non_overlap_size = window_size
+        if begin_non_overlap is None:
+            begin_non_overlap = (window_size - non_overlap_size) // 2
         
         checker = 0
         # Task of cutter is to make overlap at all positions without intersection, but in window size they can
         for window in windows:
-            assert len(window) == window_size, f"Window size is not equal to window_size, window: {window}, window_size: {window_size}, overlap_size: {overlap_size}, begin_overlap: {begin_overlap}"
-            for i in range(overlap_size):
-                assert window[begin_overlap + i] == checker, windows
-                # if checker == range_size - 1 and is_end_i < 0:
-                #     is_end_i = i
-                # elif is_end_i >= 0 and i != is_end_i and checker >= range_size - 1:
-                #     raise RuntimeError(f"Frame cutter is finished, but we have more frames to process, window: {window}, "
-                #                        f"i: {i}, begin_overlap: {begin_overlap}, overlap_size: {overlap_size}, range_size: {range_size}")
+            assert len(window) == window_size, f"Window size is not equal to window_size, window: {window}, window_size: {window_size}, non_overlap_size: {non_overlap_size}, begin_non_overlap: {begin_non_overlap}"
+            for i in range(non_overlap_size):
+                assert window[begin_non_overlap + i] == checker, windows
                 checker += 1
                 checker = min(checker, range_size-1)
         assert checker == range_size - 1
@@ -78,7 +73,7 @@ class TestFrameCutter:
     def test_frame_accumulation(self):
         """Test that frames are properly accumulated in the buffer."""
         ws = 4
-        cutter = FrameCutter[ProcessedFrame](window_size=ws, overlap_size=2, begin_overlap=1)
+        cutter = FrameCutter[ProcessedFrame](window_size=ws, non_overlap_size=2, begin_non_overlap=1)
         
         frames = [create_num_frame(i) for i in range(10)]
         windows = []
@@ -104,8 +99,8 @@ class TestFrameCutter:
     def test_overlap_behavior(self):
         """Test that overlapping frames are correctly maintained between windows."""
         ws = 4
-        overlap = 2
-        cutter = FrameCutter[ProcessedFrame](window_size=ws, overlap_size=overlap)
+        non_overlap = 2
+        cutter = FrameCutter[ProcessedFrame](window_size=ws, non_overlap_size=non_overlap)
         
         frames = [create_num_frame(i) for i in range(6)]
         windows = []
@@ -123,17 +118,17 @@ class TestFrameCutter:
         for i in range(len(windows) - 1):
             current_window = windows[i]
             next_window = windows[i + 1]
-            assert current_window[-overlap:] == next_window[:overlap]
+            assert current_window[-non_overlap:] == next_window[:non_overlap]
 
-    def test_begin_overlap(self):
-        """Test that begin_overlap parameter correctly pads the start."""
+    def test_begin_non_overlap(self):
+        """Test that begin_non_overlap parameter correctly pads the start."""
         ws = 4
-        overlap = 2
-        begin_overlap = 1
+        non_overlap = 2
+        begin_non_overlap = 1
         cutter = FrameCutter[ProcessedFrame](
             window_size=ws,
-            overlap_size=overlap,
-            begin_overlap=begin_overlap
+            non_overlap_size=non_overlap,
+            begin_non_overlap=begin_non_overlap
         )
         
         frames = [create_num_frame(i) for i in range(5)]
@@ -152,13 +147,13 @@ class TestFrameCutter:
         if windows:
             first_window = windows[0]
             assert len(first_window) == ws
-            # First frame should be repeated begin_overlap times
+            # First frame should be repeated begin_non_overlap times
             assert all(first_window[i].frame_id == frames[0].frame_id 
-                      for i in range(begin_overlap))
+                      for i in range(begin_non_overlap))
 
     def test_finish_behavior(self):
         """Test that the cutter properly handles the end of processing."""
-        cutter = FrameCutter[ProcessedFrame](window_size=3, overlap_size=1)
+        cutter = FrameCutter[ProcessedFrame](window_size=3, non_overlap_size=1)
         
         # Process some frames
         frames = [create_num_frame(i) for i in range(4)]
@@ -169,22 +164,18 @@ class TestFrameCutter:
         
         # Signal end of processing
         final_window = cutter(None)
-        #assert final_window is not None
-        print(final_window)
         assert len(final_window) == 3
-        
 
     def test_empty_sequence(self):
         """Test behavior with an empty sequence of frames."""
-        cutter = FrameCutter[ProcessedFrame](window_size=3, overlap_size=1)
+        cutter = FrameCutter[ProcessedFrame](window_size=3, non_overlap_size=1)
         
         # Immediately signal end of processing
         final_window = cutter(None)
         assert final_window is None
 
-
-    def infer_cutter(self, range_size=10, window_size=4, overlap_size=None, begin_overlap=None):
-        cutter = FrameCutter[int](window_size=window_size, overlap_size=overlap_size, begin_overlap=begin_overlap)
+    def infer_cutter(self, range_size=10, window_size=4, non_overlap_size=None, begin_non_overlap=None):
+        cutter = FrameCutter[int](window_size=window_size, non_overlap_size=non_overlap_size, begin_non_overlap=begin_non_overlap)
         frames = [i for i in range(range_size)]
         windows = []
         for frame in frames:
@@ -214,31 +205,30 @@ class TestFrameCutter:
         assert windows == [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 9, 9]]
 
         # 2. All frames without overlap at center
-        begin_overlap = 1
-        overlap_size = 2
-        windows = self.infer_cutter(range_size=6, window_size=4, overlap_size=overlap_size, begin_overlap=begin_overlap)
+        begin_non_overlap = 1
+        non_overlap_size = 2
+        windows = self.infer_cutter(range_size=6, window_size=4, non_overlap_size=non_overlap_size, begin_non_overlap=begin_non_overlap)
         assert windows == [[0, 0, 1, 2], 
                            [1, 2, 3, 4], 
                            [3, 4, 5, 5]]
         checker = 0
         for window in windows:
-            for i in range(overlap_size):
-                assert window[begin_overlap + i] == checker
+            for i in range(non_overlap_size):
+                assert window[begin_non_overlap + i] == checker
                 checker += 1
 
         # Test no overlap that returns all frames without overlap
-        begin_overlap = 0
-        overlap_size = 3
-        windows = self.infer_cutter(range_size=6, window_size=overlap_size, overlap_size=overlap_size, begin_overlap=begin_overlap)
+        begin_non_overlap = 0
+        non_overlap_size = 3
+        windows = self.infer_cutter(range_size=6, window_size=non_overlap_size, non_overlap_size=non_overlap_size, begin_non_overlap=begin_non_overlap)
         assert windows == [[0, 1, 2], 
                            [3, 4, 5]]
         checker = 0
         for window in windows:
-            for i in range(overlap_size):
-                assert window[begin_overlap + i] == checker
+            for i in range(non_overlap_size):
+                assert window[begin_non_overlap + i] == checker
                 checker += 1       
                 
-        
     def test_single_frame(self):
-        windows = self.infer_cutter(range_size=6, window_size=3, overlap_size=2, begin_overlap=1)
+        windows = self.infer_cutter(range_size=6, window_size=3, non_overlap_size=2, begin_non_overlap=1)
         print(windows)

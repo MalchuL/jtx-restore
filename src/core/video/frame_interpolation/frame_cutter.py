@@ -15,11 +15,11 @@ class FrameCutter(Generic[T]):
 
     Attributes:
         window_size (int): Total number of frames in each window.
-        overlap_size (int): Number of frames that overlap between consecutive windows.
-        begin_overlap (int): Number of frames to overlap at the beginning of processing.
+        non_overlap_size (int): Number of frames that don't overlap between consecutive windows.
+        begin_non_overlap (int): Number of frames at the start that are not part of the overlap.
 
     Example:
-        >>> cutter = FrameCutter(window_size=4, overlap_size=2)
+        >>> cutter = FrameCutter(window_size=4, non_overlap_size=2)
         >>> frames = [frame1, frame2, frame3, frame4, frame5]
         >>> for frame in frames:
         ...     window = cutter(frame)
@@ -28,41 +28,41 @@ class FrameCutter(Generic[T]):
         >>> final_window = cutter(None)  # Process remaining frames
 
     Args:
-        overlap_size (int): Number of frames to overlap between windows. Must be > 0 and < window_size.
+        non_overlap_size (int): Number of frames that don't overlap between windows. Must be > 0 and < window_size.
         window_size (int): Size of each window. Must be >= 1.
-        begin_overlap (Optional[int]): Number of frames to overlap at the start. If None,
-            defaults to (window_size - overlap_size) // 2.
+        begin_non_overlap (Optional[int]): Number of frames at the start that are not part of the overlap. If None,
+            defaults to (window_size - non_overlap_size) // 2.
 
     Raises:
-        ValueError: If window_size < 1, overlap_size <= 0, overlap_size > window_size,
-            or begin_overlap > window_size - overlap_size.
+        ValueError: If window_size < 1, non_overlap_size <= 0, non_overlap_size > window_size,
+            or begin_non_overlap > window_size - non_overlap_size.
     """
 
     def __init__(
         self,
         window_size: int = 2,
-        overlap_size: Optional[int] = None,
-        begin_overlap: Optional[int] = None,
+        non_overlap_size: Optional[int] = None,
+        begin_non_overlap: Optional[int] = None,
     ):
         self.window_size = window_size
-        self.overlap_size = overlap_size
-        if self.overlap_size is None:
-            self.overlap_size = self.window_size
+        self.non_overlap_size = non_overlap_size
+        if self.non_overlap_size is None:
+            self.non_overlap_size = self.window_size
         if self.window_size < 1:
             raise ValueError("window must be at least 1")
-        if self.overlap_size > self.window_size:
-            raise ValueError("overlap must be less or equal than window")
-        if self.overlap_size <= 0:
-            raise ValueError("overlap must be greater than 0")
-        self.begin_overlap = begin_overlap
-        if self.begin_overlap is None:
-            self.begin_overlap = (self.window_size - self.overlap_size) // 2
-        elif self.begin_overlap > self.window_size - self.overlap_size:
-            raise ValueError("begin overlap must be less than window - overlap")
+        if self.non_overlap_size > self.window_size:
+            raise ValueError("non_overlap must be less or equal than window")
+        if self.non_overlap_size <= 0:
+            raise ValueError("non_overlap must be greater than 0")
+        self.begin_non_overlap = begin_non_overlap
+        if self.begin_non_overlap is None:
+            self.begin_non_overlap = (self.window_size - self.non_overlap_size) // 2
+        elif self.begin_non_overlap > self.window_size - self.non_overlap_size:
+            raise ValueError("begin_non_overlap must be less than window - non_overlap")
 
         self._processed_frames = 0
         self._frames: Deque[T] = deque()
-        self._padded = False  # Is initial padding applied. Used for begin overlap.
+        self._padded = False  # Is initial padding applied. Used for begin_non_overlap.
         
         # When we have None frame, we need to check if we finished processing
         # We need to check if we have enough frames to return
@@ -76,8 +76,8 @@ class FrameCutter(Generic[T]):
         This class splits frames to make overlap to be at all positions without intersection.
         00000000000000  # 12 frames
         00001111000000  # 12 frames, 4 window size
-        00002211000000  # 12 frames, 4 window size, 2 overlap
-        00001122211100  # 12 frames, 8 window size, 3 overlap, 2 begin overlap (position start from 0)
+        00002211000000  # 12 frames, 4 window size, 2 non_overlap
+        00001122211100  # 12 frames, 8 window size, 3 non_overlap, 2 begin_non_overlap (position start from 0)
         """
 
     def _pad(self, frame: T, left_padding: int = 0, right_padding: int = 0) -> T:
@@ -127,10 +127,10 @@ class FrameCutter(Generic[T]):
             RuntimeError: If called after processing is finished.
         """
         if not self._padded:
-            self._pad(frame, self.begin_overlap)
-            self._processed_frames += self.begin_overlap
+            self._pad(frame, self.begin_non_overlap)
+            self._processed_frames += self.begin_non_overlap
             self._padded = True
-            # Pads frames to make initial overlap
+            # Pads frames to make initial non_overlap
 
         if frame is not None:
             self._add_frame(frame)
@@ -144,16 +144,16 @@ class FrameCutter(Generic[T]):
             # But if _processed_frames is at start of processing, we already return all frames
             if not self._is_finish:
                 # Number of frames that we add but window size is not reached
-                remaining_frames = self._processed_frames - (self.window_size - self.overlap_size)
+                remaining_frames = self._processed_frames - (self.window_size - self.non_overlap_size)
                 # Number of frames that remains at right side of window that we must process at the end
-                not_processed_frames = self.window_size - self.overlap_size - self.begin_overlap
+                not_processed_frames = self.window_size - self.non_overlap_size - self.begin_non_overlap
                 self._remaining_frames = remaining_frames + not_processed_frames
                 self._is_finish = True
 
             if self._remaining_frames > 0:
                 self._pad(self._frames[-1], right_padding=self.window_size - self._processed_frames)
                 self._processed_frames = self.window_size
-                self._remaining_frames -= self.overlap_size
+                self._remaining_frames -= self.non_overlap_size
             else:
                 return None
 
@@ -162,12 +162,12 @@ class FrameCutter(Generic[T]):
             and len(self._frames) >= self.window_size
         ):
             # Count of frames that we have for new window
-            # This value doesn't depend on begin overlap
+            # This value doesn't depend on begin_non_overlap
             # Because we only need to offset at the beggining of processing
             # After that we can just take offset
-            # Because we always offsets on window size - overlap size
+            # Because we always offsets on window size - non_overlap_size
 
-            self._processed_frames = self.window_size - self.overlap_size
+            self._processed_frames = self.window_size - self.non_overlap_size
 
             frames = list(self._frames)
             return list(frames)
