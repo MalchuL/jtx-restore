@@ -26,6 +26,7 @@ class ImageReader(VideoReader):
         source_path: Union[str, Path],
         frame_name_template: str = "frame_{:08d}.{ext}",
         format: str = "png",
+        fps: Optional[float] = None,
     ):
         """Initialize the image reader.
 
@@ -37,6 +38,7 @@ class ImageReader(VideoReader):
         super().__init__(source_path)
         self.frame_name_template = frame_name_template
         self.format = format
+        self._fps = fps
         self._current_index = 0
         self._number_of_images = 0
         self._last_frame = None  # last frame read, used to fill gaps if images are missing
@@ -102,12 +104,17 @@ class ImageReader(VideoReader):
         if self._last_frame is None:
             self._last_frame = first_frame
 
+        if self._fps is None:
+            duration = None
+        else:
+            duration = self._number_of_images / self._fps
+
         self._metadata = VideoMetadata(
             width=first_frame.shape[1],
             height=first_frame.shape[0],
-            fps=None,  # Default FPS since we don't have timing info
+            fps=self._fps,
             frame_count=self._number_of_images,
-            duration=None,  # Approximate duration
+            duration=duration,
             codec=self.format,
             color_space="RGB",  # We convert to RGB
         )
