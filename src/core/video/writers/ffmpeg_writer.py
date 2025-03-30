@@ -269,6 +269,8 @@ Or using Scoop:
             self._initialize()
 
         self._image_writer.open()
+        if not os.path.exists(self._get_image_folder()):
+            raise RuntimeError(f"Image folder does not exist: {self._get_image_folder()}")
         self._is_open = True
 
     def close(self) -> None:
@@ -288,10 +290,18 @@ Or using Scoop:
 
         self._is_open = False
 
+    def _get_image_folder(self) -> Path:
+        """Get the image folder name."""
+        return self._temp_dir_path / self._image_writer.IMAGE_FOLDER
+
     def _convert_to_video(self) -> None:
         """Convert image sequence to video using FFmpeg."""
         # Build FFmpeg command
-        input_pattern = str(self._temp_dir_path / "images" / "frame_%08d.png")
+        if not os.path.exists(self._get_image_folder()):
+            raise RuntimeError(f"Image folder does not exist: {self._get_image_folder()}")
+        if len(os.listdir(self._get_image_folder())) == 0:
+            raise RuntimeError(f"Image folder is empty: {self._get_image_folder()}")
+        input_pattern = str(self._get_image_folder() / "frame_%08d.png")
         output_path = str(self.output_path)
 
         # Base command

@@ -26,6 +26,8 @@ class ImageWriter(VideoWriter[FrameType]):
     directory. It supports common image formats and provides options for
     frame numbering and file naming.
     """
+    IMAGE_FOLDER = "images"
+
 
     def __init__(
         self,
@@ -55,7 +57,7 @@ class ImageWriter(VideoWriter[FrameType]):
         )
 
         self.output_dir = Path(output_path)
-        self.images_dir = self.output_dir / "images"
+        self.images_dir = self.output_dir / self.IMAGE_FOLDER
         self.format = format.lower()
         self.frame_name_template = frame_name_template
         self.metadata_file = metadata_file
@@ -168,6 +170,8 @@ class ImageWriter(VideoWriter[FrameType]):
 
         if frame is None:
             raise ValueError("Frame is None")
+        if not os.path.exists(self.images_dir):
+            raise RuntimeError(f"Image folder does not exist: {self.images_dir}")
 
         # Generate output path
         output_path = self._get_frame_path(self.current_frame)

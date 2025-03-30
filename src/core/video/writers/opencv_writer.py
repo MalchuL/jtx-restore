@@ -177,6 +177,8 @@ class OpenCVVideoWriter(VideoWriter):
         """
         if not self.is_open:
             raise IOError("Writer is not open")
+        if not os.path.exists(self.output_path):
+            raise IOError(f"Video file does not exist: {self.output_path}")
 
         # Check if frame needs resizing
         if (frame.shape[1], frame.shape[0]) != self.frame_size:
