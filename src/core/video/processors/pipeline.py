@@ -9,7 +9,7 @@ frame processors together. All processors work with frames in RGB format.
 from typing import List, Sequence
 
 from src.core.video.processors.frame import ProcessedFrame
-from src.core.video.processors.base import FrameProcessor
+from src.core.video.processors.processor import FrameProcessor
 
 
 class ProcessorPipeline(FrameProcessor):

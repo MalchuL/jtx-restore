@@ -5,7 +5,7 @@ from typing import Iterator, List, Optional, Union, Dict, Any
 import logging
 
 from src.core.video.types import FrameType
-from src.core.video.readers.reader import VideoReader, VideoMetadata
+from src.core.video.readers.video_reader import VideoReader, VideoMetadata
 
 
 class FolderCacheReader(VideoReader):

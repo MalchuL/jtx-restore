@@ -8,7 +8,7 @@ various enhancers and transformations.
 
 # Core processor classes
 from src.core.video.processors.frame import ProcessedFrame
-from src.core.video.processors.base import FrameProcessor
+from src.core.video.processors.processor import FrameProcessor
 from src.core.video.processors.pipeline import ProcessorPipeline
 
 # Import enhancers subpackage

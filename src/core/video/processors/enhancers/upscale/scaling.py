@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union, Any
 import cv2
 import numpy as np
 
-from src.core.video.processors.base import FrameProcessor
+from src.core.video.processors.processor import FrameProcessor
 from src.core.video.processors.frame import ProcessedFrame
 from src.core.video.processors.parallel import ParallelProcessor
 

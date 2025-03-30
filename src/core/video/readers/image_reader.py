@@ -11,7 +11,7 @@ import re
 import cv2
 import numpy as np
 
-from src.core.video.readers.reader import VideoReader, VideoMetadata
+from src.core.video.readers.video_reader import VideoReader, VideoMetadata
 from src.core.video.types import FrameType
 
 

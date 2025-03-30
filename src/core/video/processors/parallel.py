@@ -12,7 +12,7 @@ from concurrent.futures import ProcessPoolExecutor
 import functools
 
 from src.core.video.processors.frame import ProcessedFrame
-from src.core.video.processors.base import FrameProcessor
+from src.core.video.processors.processor import FrameProcessor
 
 
 class ParallelProcessor(FrameProcessor):
