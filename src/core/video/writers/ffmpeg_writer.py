@@ -340,6 +340,9 @@ Or using Scoop:
 
         if frame is None:
             raise ValueError("Frame is None")
+        
+        if not isinstance(frame, FrameType):
+            raise ValueError(f"Frame is not a FrameType, got: {type(frame)}")
 
         # Write frame using image writer
         self._image_writer.write_frame(frame)

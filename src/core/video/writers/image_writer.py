@@ -170,6 +170,8 @@ class ImageWriter(VideoWriter[FrameType]):
 
         if frame is None:
             raise ValueError("Frame is None")
+        elif not isinstance(frame, FrameType):
+            raise ValueError(f"Frame is not a FrameType, got: {type(frame)}")
         if not os.path.exists(self.images_dir):
             raise RuntimeError(f"Image folder does not exist: {self.images_dir}")
 
