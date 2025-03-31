@@ -18,7 +18,7 @@ from rich.progress import (
 from rich.live import Live
 from rich.console import Console
 
-from src.core.utils.progress_interface import ProgressInterface
+from ..progress_interface import ProgressInterface
 
 
 class RichProgressBar(ProgressInterface):

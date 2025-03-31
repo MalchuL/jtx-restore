@@ -4,14 +4,14 @@ This module provides a Rich-based implementation of the table interface.
 """
 
 from typing import Any, List, Optional
-from rich.table import Table as RichTable
+from rich.table import Table
 from rich.console import Console
 from rich import box
 
-from src.core.utils.table_interface import TableInterface, TableStyle
+from ..table_interface import TableInterface, TableStyle
 
 
-class RichTableImpl(TableInterface):
+class RichTable(TableInterface):
     """Rich-based table implementation."""
 
     def __init__(
@@ -40,15 +40,7 @@ class RichTableImpl(TableInterface):
         self._show_footer = show_footer
         self._expand = expand
         self._console = Console()
-        self._table = RichTable(
-            title=title,
-            caption=caption,
-            show_header=show_header,
-            show_footer=show_footer,
-            expand=expand,
-        )
-        # Set the box style after creating the table
-        self._table.box = self._get_box_style(style)
+        self._create_table()
 
     def add_column(
         self,
@@ -103,12 +95,7 @@ class RichTableImpl(TableInterface):
             title: Section title
             style: Optional style for the section
         """
-        # Create a section header row that spans all columns
-        header_style = style or "bold cyan"
-        self._table.add_row(
-            f"[{header_style}]{title}[/]",
-            style=header_style,
-        )
+        self._table.add_section(title, style=style)
 
     def add_footer(self, *cells: Any) -> None:
         """Add a footer row to the table.
@@ -161,9 +148,20 @@ class RichTableImpl(TableInterface):
         """
         return len(self._table.columns)
 
-    def clear(self) -> None:
+    def _create_table(self) -> None:
         """Clear all rows from the table."""
-        self._table.rows.clear()
+        self._table = Table(
+            title=self._title,
+            caption=self._caption,
+            show_header=self._show_header,
+            show_footer=self._show_footer,
+            expand=self._expand,
+        )
+        # Set the box style after creating the table
+        self._table.box = self._get_box_style(self._style)
+
+    def clear(self) -> None:
+        self._create_table()
 
     def render(self) -> str:
         """Render the table to a string.
@@ -171,7 +169,7 @@ class RichTableImpl(TableInterface):
         Returns:
             str: Rendered table
         """
-        return str(self._table)
+        return self._console.print(self._table)
 
     def is_empty(self) -> bool:
         """Check if the table is empty.

@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 from enum import Enum
 
-from src.core.utils.drawable import Drawable
+from .drawable import Drawable
 
 
 class TextStyle(Enum):

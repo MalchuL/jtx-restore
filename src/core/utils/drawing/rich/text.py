@@ -4,12 +4,12 @@ This module provides a Rich-based implementation of the text interface.
 """
 
 from typing import Optional
-from rich.text import Text as RichText
+from rich.text import Text
 from rich.console import Console
-from rich.align import Align
 from rich.panel import Panel
-
-from src.core.utils.text_interface import (
+from rich import box
+from rich.align import Align
+from ..text_interface import (
     TextInterface,
     TextStyle,
     TextColor,
@@ -30,7 +30,7 @@ class RichText(TextInterface):
         color: Optional[TextColor] = None,
         background: Optional[TextBackground] = None,
         justify: Optional[TextJustify] = None,
-        align: Optional[TextAlign] = None,
+        align: Optional[TextAlign] = TextAlign.CENTER,
         overflow: Optional[TextOverflow] = None,
         width: Optional[int] = None,
     ) -> None:
@@ -46,7 +46,7 @@ class RichText(TextInterface):
             overflow: Optional text overflow behavior
             width: Optional text width
         """
-        self._text = RichText(text)
+        self._text = Text(text)
         self._console = Console()
         self._width = width
         self._style = style
@@ -75,7 +75,7 @@ class RichText(TextInterface):
         Args:
             text: Text content to set
         """
-        self._text = RichText(text)
+        self._text = Text(text)
 
     def set_style(self, style: TextStyle) -> None:
         """Set the text style.
@@ -133,7 +133,6 @@ class RichText(TextInterface):
             align: Text alignment to use
         """
         self._align = align
-        self._text.align = align.value
 
     def set_overflow(self, overflow: TextOverflow) -> None:
         """Set the text overflow behavior.
@@ -182,21 +181,23 @@ class RichText(TextInterface):
             content,
             expand=False,
             width=self._width,
-            box=None,
+            box=box.ROUNDED,  # Use ROUNDED box style
             padding=(0, 1),
         )
 
         # Apply alignment
         if self._align == TextAlign.LEFT:
-            return str(panel)
+            self._console.print(Align.left(panel))
         elif self._align == TextAlign.CENTER:
-            return str(Align.center(panel))
+            self._console.print(Align.center(panel))
         else:  # RIGHT
-            return str(Align.right(panel))
+            self._console.print(Align.right(panel))
+
+        return str(content)  # Return the rendered text content
 
     def clear(self) -> None:
         """Clear the text."""
-        self._text = RichText()
+        self._text = Text()
 
     def is_empty(self) -> bool:
         """Check if the text is empty.
@@ -224,4 +225,4 @@ class RichText(TextInterface):
         """
         if not self._width:
             return len(self._text.split("\n"))
-        return len(self._text.wrap(self._width).split("\n")) 
+        return len(self._text.wrap(self._width).split("\n"))

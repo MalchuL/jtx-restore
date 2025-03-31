@@ -7,7 +7,7 @@ providing a common API for displaying progress in the terminal.
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from src.core.utils.drawable import Drawable
+from .drawable import Drawable
 
 
 class ProgressInterface(Drawable):
