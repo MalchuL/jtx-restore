@@ -25,21 +25,15 @@ class DefaultVideoPipeline:
 
     def __init__(
         self,
-        input_path: Path,
-        output_path: Path,
         processors: Optional[Sequence[FrameProcessor]] = None,
         batch_size: int = 1,
     ) -> None:
         """Initialize the video pipeline.
 
         Args:
-            input_path: Path to the input video file.
-            output_path: Path where the processed video will be saved.
             processors: Optional sequence of frame processors to apply.
             batch_size: Number of frames to process in each batch.
         """
-        self.input_path = input_path
-        self.output_path = output_path
         self.processors = processors or []
         self.reader: Optional[VideoReader] = None
         self.writer: Optional[VideoWriter] = None
@@ -51,11 +45,8 @@ class DefaultVideoPipeline:
         self.logger = logging.getLogger(__name__)
 
     @abstractmethod
-    def _create_reader(self, input_path: Path) -> VideoReader:
+    def _create_reader(self) -> VideoReader:
         """Create a video reader instance.
-
-        Args:
-            input_path: Path to the input video file.
 
         Returns:
             VideoReader: A video reader instance.
@@ -63,11 +54,10 @@ class DefaultVideoPipeline:
         pass
 
     @abstractmethod
-    def _create_writer(self, output_path: Path, metadata: VideoMetadata) -> VideoWriter:
+    def _create_writer(self, metadata: VideoMetadata) -> VideoWriter:
         """Create a video writer instance.
 
         Args:
-            output_path: Path where the processed video will be saved.
             metadata: Video metadata from the reader.
 
         Returns:
@@ -91,15 +81,12 @@ class DefaultVideoPipeline:
         self.logger.info("Setting up video pipeline...")
         
         # Initialize reader and writer
-        self.reader = self._create_reader(self.input_path)
+        self.reader = self._create_reader()
         self.reader.open()
         
         # Create writer with metadata from reader
         metadata = self.update_metadata(self.reader.metadata)
-        self.writer = self._create_writer(
-            output_path=self.output_path,
-            metadata=metadata
-        )
+        self.writer = self._create_writer(metadata=metadata)
         self.writer.open()
         
         self.logger.info(
