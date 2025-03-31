@@ -174,6 +174,7 @@ class ImageWriter(VideoWriter[FrameType]):
             raise ValueError(f"Frame is not a FrameType, got: {type(frame)}")
         if not os.path.exists(self.images_dir):
             raise RuntimeError(f"Image folder does not exist: {self.images_dir}")
+        self._check_frame_size(frame)
 
         # Generate output path
         output_path = self._get_frame_path(self.current_frame)

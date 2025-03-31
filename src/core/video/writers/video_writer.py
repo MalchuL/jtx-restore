@@ -80,6 +80,12 @@ class VideoWriter(ABC, Generic[T]):
         """
         pass
     
+    def _check_frame_size(self, frame: FrameType) -> None:
+        if self.frame_size is None:
+            self.frame_size = (frame.shape[1], frame.shape[0])
+        elif self.frame_size != (frame.shape[1], frame.shape[0]):
+            raise ValueError(f"Frame size mismatch: {self.frame_size} != {frame.shape[1]}x{frame.shape[0]}")
+    
     def write_frames(self, frames: List[FrameType]) -> None:
         """Write multiple frames to the video.
         
