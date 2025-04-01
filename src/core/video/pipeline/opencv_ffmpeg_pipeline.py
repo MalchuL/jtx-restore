@@ -28,6 +28,7 @@ class OpenCVFFmpegPipeline(DefaultVideoPipeline):
         processors (Optional[Sequence[FrameProcessor]]): Optional sequence of frame processors
         reader (Optional[OpenCVVideoReader]): The OpenCV video reader instance
         writer (Optional[FFmpegVideoWriter]): The FFmpeg video writer instance
+        upscale_coefficient (float): Coefficient to scale the output frame size
     """
     def __init__(
         self,
@@ -35,6 +36,7 @@ class OpenCVFFmpegPipeline(DefaultVideoPipeline):
         output_path: Path,
         processors: Optional[Sequence[FrameProcessor]] = None,
         batch_size: int = 1,
+        upscale_coefficient: float = 1.0,
     ) -> None:
         """Initialize the OpenCV FFmpeg pipeline.
 
@@ -43,10 +45,12 @@ class OpenCVFFmpegPipeline(DefaultVideoPipeline):
             output_path: Path where the processed video will be saved
             processors: Optional sequence of frame processors to apply
             batch_size: Number of frames to process in each batch
+            upscale_coefficient: Coefficient to scale the output frame size (e.g., 2.0 for 2x upscaling)
         """
         super().__init__(processors=processors, batch_size=batch_size)
         self.input_path = input_path
         self.output_path = output_path
+        self.upscale_coefficient = upscale_coefficient
 
     def _create_reader(self) -> OpenCVVideoReader:
         """Create an OpenCV video reader instance.
@@ -80,8 +84,8 @@ class OpenCVFFmpegPipeline(DefaultVideoPipeline):
     def update_metadata(self, metadata: VideoMetadata) -> VideoMetadata:
         """Update the metadata of the video.
 
-        This implementation preserves the original metadata from the input video.
-        Subclasses can override this method to modify metadata for the output video.
+        This implementation scales the frame dimensions according to the upscale coefficient
+        while preserving other metadata properties.
 
         Args:
             metadata (VideoMetadata): The metadata of the video
@@ -89,4 +93,15 @@ class OpenCVFFmpegPipeline(DefaultVideoPipeline):
         Returns:
             VideoMetadata: The updated metadata of the video
         """
-        return metadata 
+        # Create a copy of the metadata to avoid modifying the original
+        updated_metadata = VideoMetadata(
+            width=int(metadata.width * self.upscale_coefficient),
+            height=int(metadata.height * self.upscale_coefficient),
+            fps=metadata.fps,
+            frame_count=metadata.frame_count,
+            duration=metadata.duration,
+            codec=metadata.codec,
+            color_space=metadata.color_space,
+            bit_depth=metadata.bit_depth,
+        )
+        return updated_metadata 
