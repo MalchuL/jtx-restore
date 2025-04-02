@@ -96,11 +96,12 @@ class RealESRGANProcessor(AIProcessor):
         if device is None:
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
         device = torch.device(device)
-            
+        
+        self._num_patches = batch_size  # Number of patches to process in each batch
         super().__init__(
             model_name=model_name,
             device=device,
-            batch_size=batch_size,
+            batch_size=1,
             fill_batch=fill_batch
         )
         
@@ -161,6 +162,6 @@ class RealESRGANProcessor(AIProcessor):
         outputs = []
         for img in inputs:
             # RealESRGAN processes one image at a time
-            output = self.upsampler.predict(img, batch_size=self.batch_size)
+            output = self.upsampler.predict(img, batch_size=self._num_patches)
             outputs.append(output)
         return outputs 

@@ -79,6 +79,14 @@ class FrameCutter(Generic[T]):
         00002211000000  # 12 frames, 4 window size, 2 non_overlap
         00001122211100  # 12 frames, 8 window size, 3 non_overlap, 2 begin_non_overlap (position start from 0)
         """
+        
+    def reset(self) -> None:
+        """Reset the frame cutter to the initial state."""
+        self._processed_frames = 0
+        self._frames: Deque[T] = deque()
+        self._padded = False  # Is initial padding applied. Used for begin_non_overlap.
+        self._remaining_frames = 0
+        self._is_finish = False
 
     def _pad(self, frame: T, left_padding: int = 0, right_padding: int = 0) -> T:
         """Add padding frames to the buffer.

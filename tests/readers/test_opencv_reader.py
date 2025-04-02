@@ -323,6 +323,10 @@ class TestOpenCVVideoReader:
             frames.append(frame)
         
         # Should have read all frames
+        for _ in range(20):
+            assert reader.read_frame() is None
+        
+        # Should have read all frames
         assert len(frames) == 10
         
         # And position should be at the end
