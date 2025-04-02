@@ -12,6 +12,8 @@ class FrameCutter(Generic[T]):
     This class is designed to process video frames by creating overlapping windows
     of frames, which is useful for frame interpolation and other temporal processing tasks.
     It maintains a sliding window with configurable overlap and window sizes.
+    Outputs are list of frames with same length. To support same lenght we need to pad frames at
+    the beggining and end of the video.
 
     Attributes:
         window_size (int): Total number of frames in each window.
@@ -25,7 +27,18 @@ class FrameCutter(Generic[T]):
         ...     window = cutter(frame)
         ...     if window:
         ...         process_window(window)
-        >>> final_window = cutter(None)  # Process remaining frames
+        >>> # Process remaining frames
+        >>> for window in cutter.get_remaining_windows():
+        ...     process_window(window)
+        >>> # OR
+        >>> while True:
+        >>>     # In cases where non_overlap_size is less than window_size more than 2
+        >>>     # We need to process remaining frames
+        >>>     window = cutter(None)
+        >>>     if window:
+        >>>         process_window(window)
+        >>>     else:
+        >>>         break
 
     Args:
         non_overlap_size (int): Number of frames that don't overlap between windows. Must be > 0 and < window_size.
@@ -63,7 +76,7 @@ class FrameCutter(Generic[T]):
         self._processed_frames = 0
         self._frames: Deque[T] = deque()
         self._padded = False  # Is initial padding applied. Used for begin_non_overlap.
-        
+
         # When we have None frame, we need to check if we finished processing
         # We need to check if we have enough frames to return
         # Because we can have situation when we have less frames than window size
@@ -79,7 +92,7 @@ class FrameCutter(Generic[T]):
         00002211000000  # 12 frames, 4 window size, 2 non_overlap
         00001122211100  # 12 frames, 8 window size, 3 non_overlap, 2 begin_non_overlap (position start from 0)
         """
-        
+
     def reset(self) -> None:
         """Reset the frame cutter to the initial state."""
         self._processed_frames = 0
@@ -147,19 +160,26 @@ class FrameCutter(Generic[T]):
             # If frame is None, it means that we have reached the end of the video
             # We need to pad the last frame to make it the same size as the window
             # And return frames that we doesnt see in buffer
-            
+
             # If _processed_frames is less than window size, we need to pad the last frame
             # But if _processed_frames is at start of processing, we already return all frames
             if not self._is_finish:
                 # Number of frames that we add but window size is not reached
-                remaining_frames = self._processed_frames - (self.window_size - self.non_overlap_size)
+                remaining_frames = self._processed_frames - (
+                    self.window_size - self.non_overlap_size
+                )
                 # Number of frames that remains at right side of window that we must process at the end
-                not_processed_frames = self.window_size - self.non_overlap_size - self.begin_non_overlap
+                not_processed_frames = (
+                    self.window_size - self.non_overlap_size - self.begin_non_overlap
+                )
                 self._remaining_frames = remaining_frames + not_processed_frames
                 self._is_finish = True
 
             if self._remaining_frames > 0:
-                self._pad(self._frames[-1], right_padding=self.window_size - self._processed_frames)
+                self._pad(
+                    self._frames[-1],
+                    right_padding=self.window_size - self._processed_frames,
+                )
                 self._processed_frames = self.window_size
                 self._remaining_frames -= self.non_overlap_size
             else:
@@ -179,6 +199,20 @@ class FrameCutter(Generic[T]):
 
             frames = list(self._frames)
             return list(frames)
+
+    def get_remaining_windows(self) -> List[List[T]]:
+        """Get the remaining windows.
+
+        Returns:
+            List[List[T]]: A list of frames forming a window if available, None otherwise.
+        """
+        output = []
+        while True:
+            window = self.process_frame(None)
+            if window is None:
+                break
+            output.append(window)
+        return output
 
     def __call__(self, frame: T) -> Optional[List[T]]:
         """Make the FrameCutter callable.
