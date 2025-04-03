@@ -337,7 +337,7 @@ class TestFrameCutter:
         assert len(windows + [w.frames for w in remaining_windows]) == 2
         assert len(remaining_windows) == 0
         out = cutter(None)
-        assert out.is_last
+        assert out.finished
         
     def test_no_remaining_frames(self):
         """Test behavior when there are no remaining frames to process."""
@@ -352,7 +352,7 @@ class TestFrameCutter:
         # Signal end of processing
         window = cutter(None)
         assert not window.ready
-        assert window.is_last
+        assert window.finished
         
         # Get remaining windows
         remaining_windows = cutter.get_remaining_windows()
@@ -388,11 +388,11 @@ class TestFrameCutter:
         for frame in frames:
             window = cutter(frame)
             if window.ready:
-                assert not window.is_last
+                assert not window.finished
         
         # Signal end of processing
         window = cutter(None)
-        assert not window.is_last  # We still have frames to process
+        assert not window.finished  # We still have frames to process
         
         # Get remaining windows
         remaining_windows = cutter.get_remaining_windows()
@@ -415,7 +415,7 @@ class TestFrameCutter:
         print(remaining_windows)
         # Verify finish state
         # We must not add empty windows to remaining windows
-        assert not remaining_windows[-1].is_last
+        assert not remaining_windows[-1].finished
         assert len(remaining_windows[-1].frames) != 0
         
         # Reset and verify state

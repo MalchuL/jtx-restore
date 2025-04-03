@@ -141,8 +141,9 @@ class ParallelProcessor(FrameProcessor):
         results = []
         for future in futures:
             result = future.result()
-            if result is not None:
-                results.append(result)
+            if result is None:
+                raise ValueError(f"{self.__class__.__name__} returned None.")
+
 
         return results
 

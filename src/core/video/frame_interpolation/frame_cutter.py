@@ -11,7 +11,7 @@ T = TypeVar("T")
 class CutterWindow(Generic[T]):
     frames: List[T]  # Frames that are ready to be processed
     ready: bool  # If we have enough frames to process
-    is_last: bool  # If we have reached the end of the video
+    finished: bool  # If we have reached the end of the video
     remaining_frames: int  # Number of frames that we need to process
 
 
@@ -144,14 +144,14 @@ class FrameCutter(Generic[T]):
         """
         self._pad(frame, right_padding=1)
 
-    def process_frame(self, frame: Optional[T]) -> Optional[List[T]]:
+    def process_frame(self, frame: Optional[T]) -> CutterWindow[T]:
         """Process a single frame and return a window if available.
 
         Args:
             frame (Optional[T]): The frame to process. If None, indicates end of processing.
 
         Returns:
-            Optional[List[T]]: A list of frames forming a window if available, None otherwise.
+            CutterWindow[T]: A window of frames if available.
 
         Raises:
             RuntimeError: If called after processing is finished.
@@ -195,7 +195,7 @@ class FrameCutter(Generic[T]):
                 return CutterWindow(
                     frames=[],
                     ready=False,
-                    is_last=True,
+                    finished=True,
                     remaining_frames=0  # Return
                 )
 
@@ -215,14 +215,14 @@ class FrameCutter(Generic[T]):
             return CutterWindow(
                 frames=list(frames), 
                 ready=True,
-                is_last=False,
+                finished=False,
                 remaining_frames=0
             )
         else:
             return CutterWindow(
                 frames=[],
                 ready=False,
-                is_last=False,
+                finished=False,
                 remaining_frames=self.window_size - self._processed_frames,
             )  # Return empty list, that means that we have no frames to process
 
@@ -235,7 +235,7 @@ class FrameCutter(Generic[T]):
         output = []
         while True:
             window = self.process_frame(None)
-            if window.is_last:
+            if window.finished:
                 break
             output.append(window)
         return output

@@ -7,6 +7,7 @@ video frame processing. It defines the interface and common functionality
 for all AI-based processors.
 """
 
+from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Sequence
 import numpy as np
 
@@ -14,7 +15,7 @@ from src.core.video.processors.frame import ProcessedFrame
 from src.core.video.processors.processor import FrameProcessor
 
 
-class AIProcessor(FrameProcessor):
+class AIProcessor(FrameProcessor, ABC):
     """Base class for AI-based frame processors.
     
     This processor provides a framework for using deep learning models
@@ -70,16 +71,15 @@ class AIProcessor(FrameProcessor):
             self._load_model()
             self._is_initialized = True
 
+    @abstractmethod
     def _load_model(self) -> None:
         """Load the AI model and processor.
         
         This method should be overridden by subclasses to implement
         specific model loading logic.
         """
-        raise NotImplementedError(
-            "Subclasses must implement _load_model"
-        )
 
+    @abstractmethod
     def _preprocess(self, frame: ProcessedFrame) -> Any:
         """Preprocess a frame for model input.
         
@@ -92,9 +92,6 @@ class AIProcessor(FrameProcessor):
         Returns:
             Preprocessed data ready for model input
         """
-        raise NotImplementedError(
-            "Subclasses must implement _preprocess"
-        )
 
     def _postprocess(self, model_output: Any) -> np.ndarray:
         """Postprocess model output into a frame.
@@ -108,9 +105,7 @@ class AIProcessor(FrameProcessor):
         Returns:
             Processed frame data as numpy array
         """
-        raise NotImplementedError(
-            "Subclasses must implement _postprocess"
-        )
+
 
     def _infer_model(self, inputs: List[Any], *args, **kwargs) -> List[Any]:
         """Run model inference on a batch of inputs.

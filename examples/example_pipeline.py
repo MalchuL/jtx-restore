@@ -44,7 +44,7 @@ def create_processor_pipeline() -> List[FrameProcessor]:
         RealESRGANProcessor(
             scale=2,  # 4x upscaling
             device="cuda",  # Use CUDA if available
-            batch_size=32,  # RealESRGAN processes one frame at a time
+            batch_size=16,  # RealESRGAN processes one frame at a time
         ),
         # Enhance colors and adjust visual parameters
         # ColorCorrectionProcessor(
@@ -75,6 +75,7 @@ def main():
         input_path=args.input_path,
         output_path=args.output_path,
         processors=create_processor_pipeline(),
+        batch_size=12,
         upscale_coefficient=2.0,  # Match RealESRGAN's 4x upscaling
     )
 
