@@ -1,9 +1,18 @@
 from collections import deque
 from typing import Deque, Generic, List, Optional, TypeVar
+from dataclasses import dataclass
 from src.core.video.processors.frame import ProcessedFrame
 
 
 T = TypeVar("T")
+
+
+@dataclass
+class CutterWindow(Generic[T]):
+    frames: List[T]  # Frames that are ready to be processed
+    ready: bool  # If we have enough frames to process
+    is_last: bool  # If we have reached the end of the video
+    remaining_frames: int  # Number of frames that we need to process
 
 
 class FrameCutter(Generic[T]):
@@ -183,7 +192,12 @@ class FrameCutter(Generic[T]):
                 self._processed_frames = self.window_size
                 self._remaining_frames -= self.non_overlap_size
             else:
-                return None
+                return CutterWindow(
+                    frames=[],
+                    ready=False,
+                    is_last=True,
+                    remaining_frames=0  # Return
+                )
 
         if (
             self._processed_frames >= self.window_size
@@ -198,29 +212,41 @@ class FrameCutter(Generic[T]):
             self._processed_frames = self.window_size - self.non_overlap_size
 
             frames = list(self._frames)
-            return list(frames)
+            return CutterWindow(
+                frames=list(frames), 
+                ready=True,
+                is_last=False,
+                remaining_frames=0
+            )
+        else:
+            return CutterWindow(
+                frames=[],
+                ready=False,
+                is_last=False,
+                remaining_frames=self.window_size - self._processed_frames,
+            )  # Return empty list, that means that we have no frames to process
 
-    def get_remaining_windows(self) -> List[List[T]]:
+    def get_remaining_windows(self) -> List[CutterWindow[T]]:
         """Get the remaining windows.
 
         Returns:
-            List[List[T]]: A list of frames forming a window if available, None otherwise.
+            List[CutterWindow[T]]: A list of frames forming a window if available, empty list otherwise.
         """
         output = []
         while True:
             window = self.process_frame(None)
-            if window is None:
+            if window.is_last:
                 break
             output.append(window)
         return output
 
-    def __call__(self, frame: T) -> Optional[List[T]]:
+    def __call__(self, frame: T) -> CutterWindow[T]:
         """Make the FrameCutter callable.
 
         Args:
             frame (T): The frame to process.
 
         Returns:
-            Optional[List[T]]: A window of frames if available, None otherwise.
+            CutterWindow[T]: A window of frames if available, None otherwise.
         """
         return self.process_frame(frame)

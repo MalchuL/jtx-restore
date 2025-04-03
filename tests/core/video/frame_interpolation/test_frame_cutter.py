@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from src.core.video.processors.frame import ProcessedFrame
-from src.core.video.frame_interpolation.frame_cutter import FrameCutter
+from src.core.video.frame_interpolation.frame_cutter import FrameCutter, CutterWindow
 
 
 def create_test_frame(frame_id: int) -> ProcessedFrame:
@@ -48,9 +48,9 @@ class TestFrameCutter:
         # Process some frames
         frames = [create_num_frame(i) for i in range(4)]
         for frame in frames:
-            out = cutter(frame)
-            if out is not None:
-                assert len(out) == 3
+            window = cutter(frame)
+            if window.ready:
+                assert len(window.frames) == 3
         
         # Verify state is not empty
         assert len(cutter._frames) > 0
@@ -75,20 +75,22 @@ class TestFrameCutter:
         frames1 = [create_num_frame(i) for i in range(4)]
         windows1 = []
         for frame in frames1:
-            out = cutter(frame)
-            if out is not None:
-                windows1.append(out)
-        windows1.extend(cutter.get_remaining_windows())
+            window = cutter(frame)
+            if window.ready:
+                windows1.append(window.frames)
+        remaining_windows = cutter.get_remaining_windows()
+        windows1.extend([w.frames for w in remaining_windows])
         
         # Reset and process new sequence
         cutter.reset()
         frames2 = [create_num_frame(i) for i in range(4)]
         windows2 = []
         for frame in frames2:
-            out = cutter(frame)
-            if out is not None:
-                windows2.append(out)
-        windows2.extend(cutter.get_remaining_windows())
+            window = cutter(frame)
+            if window.ready:
+                windows2.append(window.frames)
+        remaining_windows = cutter.get_remaining_windows()
+        windows2.extend([w.frames for w in remaining_windows])
         
         # Verify both sequences produced same number of windows
         assert len(windows1) == len(windows2)
@@ -98,32 +100,6 @@ class TestFrameCutter:
             assert len(window1) == len(window2) == 3
             assert all(w1.frame_id == w2.frame_id for w1, w2 in zip(window1, window2))
 
-    def test_reset_after_finish(self):
-        """Test that reset works after finish signal."""
-        cutter = FrameCutter[ProcessedFrame](window_size=3, non_overlap_size=1)
-        
-        # Process frames and signal finish
-        frames = [create_num_frame(i) for i in range(4)]
-        windows = []
-        for frame in frames:
-            out = cutter(frame)
-            if out is not None:
-                windows.append(out)
-        windows.extend(cutter.get_remaining_windows())
-        
-        # Verify finish state
-        assert cutter._is_finish
-        assert cutter._remaining_frames == 0
-        
-        # Reset and verify state
-        cutter.reset()
-        assert not cutter._is_finish
-        assert cutter._remaining_frames == 0
-        
-        # Verify can process new frames
-        new_frame = create_num_frame(0)
-        out = cutter(new_frame)
-        assert out is None  # First window not complete yet
 
     def test_reset_with_begin_non_overlap(self):
         """Test reset with non-zero begin_non_overlap."""
@@ -137,21 +113,26 @@ class TestFrameCutter:
         frames = [create_num_frame(i) for i in range(5)]
         windows = []
         for frame in frames:
-            out = cutter(frame)
-            if out is not None:
-                assert len(out) == 4
-                windows.append(out)
-        windows.extend(cutter.get_remaining_windows())
+            window = cutter(frame)
+            if window.ready:
+                assert len(window.frames) == 4
+                windows.append(window.frames)
+        remaining_windows = cutter.get_remaining_windows()
+        windows.extend([w.frames for w in remaining_windows])
         
         # Reset and verify initial padding is cleared
         cutter.reset()
         assert not cutter._padded
         assert len(cutter._frames) == 0
+        assert cutter._processed_frames == 0
+        assert not cutter._padded
+        assert cutter._remaining_frames == 0
+        assert not cutter._is_finish
         
         # Process new frames and verify initial padding is reapplied
         new_frame = create_num_frame(0)
-        out = cutter(new_frame)
-        assert out is None  # First window not complete yet
+        window = cutter(new_frame)
+        assert not window.ready  # First window not complete yet
         assert cutter._padded
         assert len(cutter._frames) == 3  # Because we pad frames to make initial non_overlap
 
@@ -193,14 +174,14 @@ class TestFrameCutter:
         windows = []
         
         for frame in frames:
-            out = cutter(frame)
-            if out is not None:
-                assert len(out) == ws
-                windows.append(out)
+            window = cutter(frame)
+            if window.ready:
+                assert len(window.frames) == ws
+                windows.append(window.frames)
         
         # Get remaining windows
         remaining_windows = cutter.get_remaining_windows()
-        windows.extend(remaining_windows)
+        windows.extend([w.frames for w in remaining_windows])
         
         # Verify window contents
         assert len(windows) > 0
@@ -218,13 +199,13 @@ class TestFrameCutter:
         windows = []
         
         for frame in frames:
-            out = cutter(frame)
-            if out is not None:
-                windows.append(out)
+            window = cutter(frame)
+            if window.ready:
+                windows.append(window.frames)
         
         # Get remaining windows
         remaining_windows = cutter.get_remaining_windows()
-        windows.extend(remaining_windows)
+        windows.extend([w.frames for w in remaining_windows])
         
         # Verify overlap between consecutive windows
         for i in range(len(windows) - 1):
@@ -247,13 +228,13 @@ class TestFrameCutter:
         windows = []
         
         for frame in frames:
-            out = cutter(frame)
-            if out is not None:
-                windows.append(out)
+            window = cutter(frame)
+            if window.ready:
+                windows.append(window.frames)
         
         # Get remaining windows
         remaining_windows = cutter.get_remaining_windows()
-        windows.extend(remaining_windows)
+        windows.extend([w.frames for w in remaining_windows])
         
         # Verify first window has correct padding
         if windows:
@@ -271,13 +252,13 @@ class TestFrameCutter:
         frames = [create_num_frame(i) for i in range(4)]
         windows = []
         for frame in frames:
-            out = cutter(frame)
-            if out is not None:
-                windows.append(out)
+            window = cutter(frame)
+            if window.ready:
+                windows.append(window.frames)
         
         # Get remaining windows
         remaining_windows = cutter.get_remaining_windows()
-        windows.extend(remaining_windows)
+        windows.extend([w.frames for w in remaining_windows])
         
         # Verify final window
         assert len(windows[-1]) == 3
@@ -295,10 +276,11 @@ class TestFrameCutter:
         frames = [i for i in range(range_size)]
         windows = []
         for frame in frames:
-            out = cutter(frame)
-            if out is not None:
-                windows.append(out)
-        windows.extend(cutter.get_remaining_windows())
+            window = cutter(frame)
+            if window.ready:
+                windows.append(window.frames)
+        remaining_windows = cutter.get_remaining_windows()
+        windows.extend([w.frames for w in remaining_windows])
         return windows
 
     def test_cutter_cases(self):
@@ -343,14 +325,105 @@ class TestFrameCutter:
         print(windows)
         
     def test_remaining_frames(self):
-        cutter = FrameCutter[ProcessedFrame](window_size=5, non_overlap_size=5)
-        frames = [create_num_frame(i) for i in range(3)]
+        cutter = FrameCutter[ProcessedFrame](window_size=3, non_overlap_size=3)
+        frames = [create_num_frame(i) for i in range(6)]
         windows = []
         for frame in frames:
-            out = cutter(frame)
-            if out is not None:
-                windows.append(out)
+            window = cutter(frame)
+            if window.ready:
+                windows.append(window.frames)
+                
         remaining_windows = cutter.get_remaining_windows()
-        assert len(windows + remaining_windows) == 1
-        assert len(remaining_windows[0]) == 5
-        assert len(cutter.get_remaining_windows()) == 0
+        assert len(windows + [w.frames for w in remaining_windows]) == 2
+        assert len(remaining_windows) == 0
+        out = cutter(None)
+        assert out.is_last
+        
+    def test_no_remaining_frames(self):
+        """Test behavior when there are no remaining frames to process."""
+        cutter = FrameCutter[ProcessedFrame](window_size=3, non_overlap_size=3)
+        frames = [create_num_frame(i) for i in range(6)]
+        windows = []
+        for frame in frames:
+            window = cutter(frame)
+            if window.ready:
+                windows.append(window.frames)
+                
+        # Signal end of processing
+        window = cutter(None)
+        assert not window.ready
+        assert window.is_last
+        
+        # Get remaining windows
+        remaining_windows = cutter.get_remaining_windows()
+        assert len(windows + [w.frames for w in remaining_windows]) == 2
+        assert len(remaining_windows) == 0
+        
+    def test_not_ready_state(self):
+        """Test that not ready state is properly indicated."""
+        cutter = FrameCutter[ProcessedFrame](window_size=3, non_overlap_size=1)
+        
+        # Process first frame
+        window = cutter(create_num_frame(0))
+        assert not window.ready
+        assert window.remaining_frames == 1  # We pad left first
+        
+        # Process second frame
+        window = cutter(create_num_frame(1))
+        assert window.ready
+        assert window.remaining_frames == 0
+        
+        # Process third frame
+        window = cutter(create_num_frame(2))
+        assert window.ready  # Because non_overlap_size is 1, we always return full window
+        assert window.remaining_frames == 0
+        assert len(window.frames) == 3
+        
+    def test_end_of_sequence(self):
+        """Test that end of sequence is properly indicated."""
+        cutter = FrameCutter[ProcessedFrame](window_size=3, non_overlap_size=1)
+        
+        # Process frames
+        frames = [create_num_frame(i) for i in range(4)]
+        for frame in frames:
+            window = cutter(frame)
+            if window.ready:
+                assert not window.is_last
+        
+        # Signal end of processing
+        window = cutter(None)
+        assert not window.is_last  # We still have frames to process
+        
+        # Get remaining windows
+        remaining_windows = cutter.get_remaining_windows()
+        assert len(remaining_windows) == 0
+        
+    def test_reset_after_finish(self):
+        """Test that reset works after finish signal."""
+        cutter = FrameCutter[ProcessedFrame](window_size=3, non_overlap_size=1)
+        
+        # Process frames and signal finish
+        frames = [create_num_frame(i) for i in range(4)]
+        windows = []
+        for frame in frames:
+            window = cutter(frame)
+            if window.ready:
+                windows.append(window.frames)
+        remaining_windows = cutter.get_remaining_windows()
+        windows.extend([w.frames for w in remaining_windows])
+        
+        print(remaining_windows)
+        # Verify finish state
+        # We must not add empty windows to remaining windows
+        assert not remaining_windows[-1].is_last
+        assert len(remaining_windows[-1].frames) != 0
+        
+        # Reset and verify state
+        cutter.reset()
+        assert not cutter._is_finish
+        assert cutter._remaining_frames == 0
+        
+        # Verify can process new frames
+        new_frame = create_num_frame(0)
+        window = cutter(new_frame)
+        assert not window.ready  # First window not complete yet
