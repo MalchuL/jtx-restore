@@ -355,3 +355,8 @@ class FolderCacheReader(VideoReader):
                 cached_file.unlink()
         
         self.logger.info(f"Cleared cache folder: {self.cache_folder}")
+
+    @property
+    def is_finished(self) -> bool:
+        """Check if the reader has finished reading the video."""
+        return self.base_reader.is_finished

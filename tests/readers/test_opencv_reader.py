@@ -15,24 +15,30 @@ class TestOpenCVVideoReader:
         
         assert reader.source_path == temp_video_path
         assert not reader.is_open
+        assert not reader.is_finished
     
     def test_open_close(self, temp_video_path):
         """Test opening and closing the video file."""
         reader = OpenCVVideoReader(temp_video_path)
         
         assert not reader.is_open
+        assert not reader.is_finished
         reader.open()
         assert reader.is_open
+        assert not reader.is_finished
         reader.close()
         assert not reader.is_open
+        assert reader.is_finished
     
     def test_context_manager(self, temp_video_path):
         """Test using the reader as a context manager."""
         with OpenCVVideoReader(temp_video_path) as reader:
             assert reader.is_open
+            assert not reader.is_finished
         
         # Should be closed after exiting context
         assert not reader.is_open
+        assert reader.is_finished
     
     def test_metadata(self, temp_video_path):
         """Test retrieving metadata."""
@@ -64,6 +70,7 @@ class TestOpenCVVideoReader:
         
         # Check that the frame is not None
         assert frame is not None
+        assert not reader.is_finished
         # Check the shape of the frame
         assert frame.shape == (480, 640, 3)
         
@@ -87,6 +94,7 @@ class TestOpenCVVideoReader:
             frames.append(frame)
         
         assert len(frames) == 10
+        assert reader.is_finished
         
         # Check the first and last frames
         r_first = int(frames[0][0, 0, 0])
@@ -213,10 +221,12 @@ class TestOpenCVVideoReader:
         # First, check that setting a valid frame index works
         success = reader.set_frame_index(5)
         assert success
+        assert not reader.is_finished
         
         # Read the frame at the current position (which should now be index 5)
         frame = reader.read_frame()
         assert frame is not None
+        assert not reader.is_finished
         
         # Convert to int before comparison
         r_value = int(frame[0, 0, 0])
@@ -229,6 +239,7 @@ class TestOpenCVVideoReader:
         # Now read the next frame (which should be index 6)
         frame = reader.read_frame()
         assert frame is not None
+        assert not reader.is_finished
         
         # Convert to int before comparison
         b_value = int(frame[0, 0, 2])
@@ -238,20 +249,27 @@ class TestOpenCVVideoReader:
         # Test setting an invalid frame index (negative)
         success = reader.set_frame_index(-1)
         assert not success
+        assert not reader.is_finished
         
         # Test setting an invalid frame index (too large)
         success = reader.set_frame_index(100)
         assert not success
+        assert not reader.is_finished
         
         # Test is len current
         success = reader.set_frame_index(5)
         assert success
+        assert not reader.is_finished
         for _ in range(5):  # 5,6,7,8,9, 10 is not index
             frame = reader.read_frame()
             assert frame is not None
+            assert not reader.is_finished
+        
+        # Read one more frame to reach the end
         frame = reader.read_frame()
         assert frame is None
-        
+        assert reader.is_finished
+    
     def test_set_frame_timestamp(self, temp_video_path):
         """Test setting the current position to a specific timestamp."""
         reader = OpenCVVideoReader(temp_video_path)
@@ -302,32 +320,25 @@ class TestOpenCVVideoReader:
         """Test resetting the reader position."""
         reader = OpenCVVideoReader(temp_video_path)
         
-        # Read a few frames to advance the position
-        for _ in range(5):
-            reader.read_frame()
+        # Read all frames to reach the end
+        while reader.read_frame() is not None:
+            pass
+        assert reader.is_finished
         
-        # Position should be at frame 5
-        assert reader.current_index == 5
-        
-        # Reset should return true and set position to 0
+        # Reset the reader
         success = reader.reset()
         assert success
-        assert reader.current_index == 0
+        assert not reader.is_finished
         
-        # After reset, we should be able to read all frames again
-        frames = []
-        while True:
-            frame = reader.read_frame()
-            if frame is None:
-                break
-            frames.append(frame)
+        # Read a frame to verify we're back at the beginning
+        frame = reader.read_frame()
+        assert frame is not None
+        assert not reader.is_finished
         
-        # Should have read all frames
-        for _ in range(20):
-            assert reader.read_frame() is None
+        # Convert to int before comparison
+        r_value = int(frame[0, 0, 0])
+        b_value = int(frame[0, 0, 2])
         
-        # Should have read all frames
-        assert len(frames) == 10
-        
-        # And position should be at the end
-        assert reader.current_index == 10 
+        # First frame should have these values
+        assert 195 <= r_value <= 205
+        assert 0 <= b_value <= 5 

@@ -42,6 +42,7 @@ class ImageReader(VideoReader):
         self._current_index = 0
         self._number_of_images = 0
         self._last_frame = None  # last frame read, used to fill gaps if images are missing
+        self._is_finished = False
         if "{:0" not in frame_name_template:
             raise ValueError(
                 "frame_name_template must contain a placeholder for the frame index, it's importand to use {:0 for because we use sorting"
@@ -144,12 +145,14 @@ class ImageReader(VideoReader):
             self._scan_frame_files()
             self._is_open = True
             self._current_index = 0
+            self._is_finished = False
 
     def close(self) -> None:
         """Close the reader and release resources."""
         self._is_open = False
         self._current_index = 0
         self._last_frame = None
+        self._is_finished = True
 
     def read_frame(self) -> Optional[FrameType]:
         """Read a single frame from the video.
@@ -161,6 +164,7 @@ class ImageReader(VideoReader):
             self.open()
 
         if self._current_index >= self._number_of_images:
+            self._is_finished = True
             return None
 
         frame_path = self._get_frame_path(self._current_index)
@@ -214,6 +218,7 @@ class ImageReader(VideoReader):
                 frame = cv2.imread(str(frame_path))
                 self._last_frame = self._convert_to_rgb(frame)
             index -= 1
+        self._is_finished = False
         return True
 
     @property
@@ -232,6 +237,7 @@ class ImageReader(VideoReader):
             bool: True if the operation was successful, False otherwise
         """
         self._current_index = 0
+        self._is_finished = False
         return True
 
     def get_frame_at_timestamp(self, timestamp_sec: float) -> Optional[FrameType]:

@@ -64,6 +64,7 @@ def test_reader_initialization():
         )
         assert reader.format == "png"
         assert reader.frame_name_template == "frame_{:08d}.{ext}"
+        assert not reader.is_finished
         
         # Test invalid template (missing frame index)
         with pytest.raises(ValueError, match="must contain a placeholder for the frame index"):
@@ -101,12 +102,24 @@ def test_frame_reading():
         # Initialize reader
         reader = ImageReader(source_path=temp_dir)
         reader.open()
+        assert not reader.is_finished
         
         # Read frames
         frame1 = reader.read_frame()
+        assert frame1 is not None
+        assert not reader.is_finished
+        
         frame2 = reader.read_frame()
+        assert frame2 is not None
+        assert not reader.is_finished
+        
         frame3 = reader.read_frame()
+        assert frame3 is not None
+        assert not reader.is_finished
+        
         frame4 = reader.read_frame()  # Should be None
+        assert frame4 is None
+        assert reader.is_finished
         
         # Verify frames
         assert frame1 is not None
@@ -155,28 +168,38 @@ def test_random_access():
         # Initialize reader
         reader = ImageReader(source_path=temp_dir)
         reader.open()
+        assert not reader.is_finished
         
         # Test get_frame_at_index
         frame0 = reader.get_frame_at_index(0)
-        frame1 = reader.get_frame_at_index(1)
-        frame2 = reader.get_frame_at_index(2)
-        frame3 = reader.get_frame_at_index(3)  # Should be None
-        
         assert frame0 is not None
+        assert not reader.is_finished
+        
+        frame1 = reader.get_frame_at_index(1)
         assert frame1 is not None
+        assert not reader.is_finished
+        
+        frame2 = reader.get_frame_at_index(2)
         assert frame2 is not None
+        assert not reader.is_finished
+        
+        frame3 = reader.get_frame_at_index(3)  # Should be None
         assert frame3 is None
+        assert not reader.is_finished  # get_frame_at_index doesn't affect is_finished
         
         # Test set_frame_index
         reader._last_frame = None
         assert reader.set_frame_index(1)
         assert reader.current_index == 1
         assert reader._last_frame is not None
+        assert not reader.is_finished
         assert not reader.set_frame_index(3)  # Invalid index
+        assert not reader.is_finished
         
         # Test reset
         assert reader.reset()
         assert reader.current_index == 0
+        assert not reader.is_finished
 
 
 def test_batch_reading():
@@ -188,19 +211,23 @@ def test_batch_reading():
         # Initialize reader
         reader = ImageReader(source_path=temp_dir)
         reader.open()
+        assert not reader.is_finished
         
         # Test read_frames
         frames = reader.read_frames(3)
         assert len(frames) == 3
         assert all(frame.shape == (480, 640, 3) for frame in frames)
+        assert not reader.is_finished
         
         # Test read_frames beyond available frames
         frames = reader.read_frames(5)
         assert len(frames) == 2  # Only 2 frames left
+        assert reader.is_finished
         
         # Test yield_frames
         chunks = list(reader.yield_frames(chunk_size=2))
         assert len(chunks) == 0  # No frames left after previous reads
+        assert reader.is_finished
 
 
 def test_custom_format():
@@ -251,20 +278,25 @@ def test_custom_naming():
 
 
 def test_context_manager():
-    """Test reader as context manager."""
+    """Test using the reader as a context manager."""
     with TemporaryDirectory() as temp_dir:
         # Save test frames
         save_test_frames(temp_dir, count=3)
         
         # Test context manager
         with ImageReader(source_path=temp_dir) as reader:
-            frame = reader.read_frame()
-            assert frame is not None
-            assert frame.shape == (480, 640, 3)
+            assert reader.is_open
+            assert not reader.is_finished
             
-        # Reader should be closed after context
-        assert not reader.is_open 
-
+            # Read all frames
+            while reader.read_frame() is not None:
+                pass
+            
+            assert reader.is_finished
+        
+        # Should be closed after exiting context
+        assert not reader.is_open
+        assert reader.is_finished
 
 
 def test_timestamp_metadata():

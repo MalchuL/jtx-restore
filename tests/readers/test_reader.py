@@ -67,6 +67,7 @@ class MockVideoReader(VideoReader):
             duration=10.0,
             codec="mp4v"
         )
+        self._frame_count = 0
     
     @property
     def metadata(self):
@@ -74,19 +75,35 @@ class MockVideoReader(VideoReader):
     
     def open(self):
         self._is_open = True
+        self._is_finished = False
+        self._frame_count = 0
     
     def close(self):
         self._is_open = False
+        self._is_finished = True
     
     def read_frame(self):
+        if self._frame_count >= 300:
+            self._is_finished = True
+            return None
+        self._frame_count += 1
         return MagicMock()
     
     def read_frames(self, count):
-        return [MagicMock() for _ in range(count)]
+        frames = []
+        for _ in range(count):
+            frame = self.read_frame()
+            if frame is None:
+                break
+            frames.append(frame)
+        return frames
     
     def yield_frames(self, chunk_size):
-        chunk = [MagicMock() for _ in range(chunk_size)]
-        yield chunk
+        while True:
+            chunk = self.read_frames(chunk_size)
+            if not chunk:
+                break
+            yield chunk
     
     def get_frame_at_timestamp(self, timestamp_sec):
         return MagicMock()
@@ -95,16 +112,22 @@ class MockVideoReader(VideoReader):
         return MagicMock()
 
     def set_frame_index(self, index: int) -> bool:
-        return True
+        if 0 <= index < 300:
+            self._frame_count = index
+            self._is_finished = False
+            return True
+        return False
 
     def set_frame_timestamp(self, timestamp_sec: float) -> bool:
         return True
 
     @property
     def current_index(self) -> int:
-        return 0
+        return self._frame_count
 
     def reset(self) -> bool:
+        self._frame_count = 0
+        self._is_finished = False
         return True
 
 
@@ -119,6 +142,7 @@ class TestVideoReader:
         
         assert reader.source_path == source_path
         assert not reader.is_open
+        assert not reader.is_finished
     
     def test_context_manager(self):
         """Test using VideoReader as a context manager."""
@@ -126,8 +150,10 @@ class TestVideoReader:
         
         with reader as r:
             assert r.is_open
+            assert not r.is_finished
         
         assert not reader.is_open
+        assert reader.is_finished
     
     def test_properties(self):
         """Test VideoReader properties."""
@@ -136,4 +162,43 @@ class TestVideoReader:
         assert reader.frame_count == 300
         assert reader.fps == 30.0
         assert reader.duration == 10.0
-        assert reader.resolution == (1920, 1080) 
+        assert reader.resolution == (1920, 1080)
+    
+    def test_is_finished(self):
+        """Test the is_finished property."""
+        reader = MockVideoReader(Path("/path/to/video.mp4"))
+        
+        # Initially not finished
+        assert not reader.is_finished
+        
+        # Open the reader
+        reader.open()
+        assert not reader.is_finished
+        
+        # Read all frames
+        while reader.read_frame() is not None:
+            pass
+        
+        # Should be finished after reading all frames
+        assert reader.is_finished
+        
+        # Close the reader
+        reader.close()
+        assert reader.is_finished
+        
+        # Reset the reader
+        reader.reset()
+        assert not reader.is_finished
+        
+        # Set frame index
+        reader.set_frame_index(150)
+        assert not reader.is_finished
+        
+        # Set to last frame
+        reader.set_frame_index(299)
+        reader.read_frame()  # Read 299 frame
+        assert not reader.is_finished
+        
+        # Read the last frame
+        reader.read_frame()
+        assert reader.is_finished 

@@ -85,6 +85,7 @@ class TestFolderCacheReader:
         assert reader.image_format == "png"
         assert reader.frame_name_template == "frame_{:08d}.{ext}"
         assert not reader.is_open
+        assert not reader.is_finished
         assert cache_dir.exists()  # Cache folder should be created
     
     def test_custom_params(self, base_reader, cache_dir):
@@ -110,12 +111,47 @@ class TestFolderCacheReader:
     def test_open_close(self, cache_reader):
         """Test opening and closing the reader."""
         assert not cache_reader.is_open
+        assert not cache_reader.is_finished
+        
         cache_reader.open()
         assert cache_reader.is_open
+        assert not cache_reader.is_finished
         assert cache_reader.base_reader.is_open
+        
         cache_reader.close()
         assert not cache_reader.is_open
+        assert cache_reader.is_finished
         assert not cache_reader.base_reader.is_open
+    
+    def test_is_finished_property(self, cache_reader):
+        """Test the is_finished property behavior."""
+        # Initially not finished
+        assert not cache_reader.is_finished
+        
+        # Open the reader
+        cache_reader.open()
+        assert not cache_reader.is_finished
+        
+        # Read all frames
+        while True:
+            frame = cache_reader.read_frame()
+            if frame is None:
+                break
+        
+        # Should be finished after reading all frames
+        assert cache_reader.is_finished
+        
+        # Reset should set is_finished to False
+        cache_reader.reset()
+        assert not cache_reader.is_finished
+        
+        # Set frame index should set is_finished to False
+        cache_reader.set_frame_index(5)
+        assert not cache_reader.is_finished
+        
+        # Close should set is_finished to True
+        cache_reader.close()
+        assert cache_reader.is_finished
     
     def test_frame_caching(self, cache_reader, cache_dir):
         """Test that frames are cached correctly."""
@@ -227,6 +263,9 @@ class TestFolderCacheReader:
         # All frames should be cached
         cached_files = list(cache_dir.glob("*.png"))
         assert len(cached_files) == 10
+        
+        # Reader should be finished after yielding all frames
+        assert cache_reader.is_finished
     
     def test_clear_cache(self, cache_reader, cache_dir):
         """Test clearing the cache."""
@@ -341,6 +380,7 @@ class TestFolderCacheReader:
         success = cache_reader.reset()
         assert success
         assert cache_reader.current_index == 0
+        assert not cache_reader.is_finished
         
         # After reset, we should be able to read all frames again
         frames = []
@@ -355,6 +395,7 @@ class TestFolderCacheReader:
         
         # And position should be at the end
         assert cache_reader.current_index >= 9
+        assert cache_reader.is_finished
         
         # Check that all frames were cached
         cached_files = list(cache_dir.glob("*.png"))

@@ -55,6 +55,7 @@ class VideoReader(ABC):
         self.logger = logging.getLogger(self.__class__.__name__)
         self._metadata: Optional[VideoMetadata] = None
         self._is_open = False
+        self._is_finished = False
 
     @property
     @abstractmethod
@@ -175,6 +176,19 @@ class VideoReader(ABC):
     def is_open(self) -> bool:
         """Check if the video is open."""
         return self._is_open
+
+    @property
+    def is_finished(self) -> bool:
+        """Check if the reader has finished reading all frames.
+        
+        This property is set to True when:
+        1. The reader has reached the end of the video (read_frame returns None)
+        2. The reader has been closed
+        
+        Returns:
+            bool: True if the reader has finished reading all frames, False otherwise
+        """
+        return self._is_finished
 
     @property
     def frame_count(self) -> int:

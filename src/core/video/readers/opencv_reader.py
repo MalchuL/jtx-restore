@@ -86,6 +86,7 @@ class OpenCVVideoReader(VideoReader):
                 raise IOError(f"Failed to open video file: {self.source_path}")
 
             self._is_open = True
+            self._is_finished = False
             self.logger.debug(f"Opened video: {self.source_path}")
 
     def close(self) -> None:
@@ -93,6 +94,7 @@ class OpenCVVideoReader(VideoReader):
         if self.is_open and self._cap is not None:
             self._cap.release()
             self._is_open = False
+            self._is_finished = True
             self.logger.debug(f"Closed video: {self.source_path}")
 
     def read_frame(self) -> Optional[FrameType]:
@@ -109,6 +111,9 @@ class OpenCVVideoReader(VideoReader):
             # Convert from BGR to RGB
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             return frame_rgb
+        
+        # If we get here, we've reached the end of the video
+        self._is_finished = True
         return None
 
 
@@ -188,6 +193,7 @@ class OpenCVVideoReader(VideoReader):
             self.logger.error(f"Failed to set frame position to index {index}")
             return False
             
+        self._is_finished = False
         self.logger.debug(f"Set frame position to index {index}")
         return True
     
@@ -222,6 +228,7 @@ class OpenCVVideoReader(VideoReader):
                 self.logger.error(f"Failed to set frame position to timestamp {timestamp_sec} seconds")
                 return False
                 
+        self._is_finished = False
         self.logger.debug(f"Set frame position to timestamp {timestamp_sec} seconds")
         return True
     
@@ -245,4 +252,7 @@ class OpenCVVideoReader(VideoReader):
         Returns:
             bool: True if the operation was successful, False otherwise
         """
-        return self.set_frame_index(0)
+        success = self.set_frame_index(0)
+        if success:
+            self._is_finished = False
+        return success
