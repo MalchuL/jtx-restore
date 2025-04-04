@@ -143,8 +143,8 @@ class ParallelProcessor(FrameProcessor):
             result = future.result()
             if result is None:
                 raise ValueError(f"{self.__class__.__name__} returned None.")
-
-
+            results.append(result)
+            
         return results
 
     def __del__(self):
