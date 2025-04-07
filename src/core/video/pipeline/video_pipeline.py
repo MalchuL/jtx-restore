@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import List, Optional, Sequence
 
 from src.core.video.frame_interpolation.frame_cutter import FrameCutter
+from src.core.video.processors.frame_processor_manager import FrameProcessorManager
 from src.core.video.processors.frame import ProcessedFrame
 from src.core.video.processors.pipeline import ProcessorPipeline
 from src.core.video.readers.video_reader import VideoMetadata, VideoReader
@@ -37,16 +38,14 @@ class DefaultVideoPipeline:
             processors: Optional sequence of frame processors to apply.
             batch_size: Number of frames to process in each batch.
         """
-        self.single_frame_processors = ProcessorPipeline(processors or [])
-        self.frame_cutter = FrameCutter(window_size=batch_size)
+        self.single_frame_processors = FrameProcessorManager(processors or [], batch_size=batch_size)
         self.reader: Optional[VideoReader] = None
         self.writer: Optional[VideoWriter] = None
 
-        if batch_size <= 0:
-            raise ValueError("Batch size must be greater than 0")
-        self.batch_size = batch_size
-        self.use_batch_processing = batch_size > 1
         self.logger = logging.getLogger(__name__)
+        
+        # We need to know if the reader is finished to know when to stop processing
+        self._is_reader_finished = False
 
     @abstractmethod
     def _create_reader(self) -> VideoReader:
@@ -98,26 +97,16 @@ class DefaultVideoPipeline:
             f"video at {metadata.fps} FPS"
         )
 
-    def _process_frame(
-        self, frame: Optional[ProcessedFrame]
-    ) -> Optional[List[ProcessedFrame]]:
-        """Process a single frame and return a processed frame if available."""
-        if frame is None:
-            windows = self.frame_cutter.get_remaining_windows()
+    def __get_frame(self) -> Optional[ProcessedFrame]:
+        # Not all readers can always return None after the end of the video
+            # So we need to check if the reader is finished
+        if not self._is_reader_finished:
+            frame = self.reader.read_frame()
+            if frame is None:
+                self._is_reader_finished = True
         else:
-            batch = self.frame_cutter.process_frame(frame)
-            if batch is None:
-                windows = []
-            else:
-                windows = [batch]  # Single window
-        if len(windows) == 0:
-            return None
-
-        # Now we process multiple batches, because we have multiple windows at the end
-        processed_frames = []
-        for batch in windows:
-            processed_frames.extend(self.single_frame_processors.process_batch(batch))
-        return processed_frames
+            frame = None
+        return frame
 
     def process(self) -> None:
         """Process the video through the pipeline."""
@@ -127,43 +116,29 @@ class DefaultVideoPipeline:
         frame_count = 0
         self.logger.info("Starting video processing...")
 
-        non_processed_frames = 0
-        is_reader_finished = False
         while True:
-            # Not all readers can always return None after the end of the video
-            # So we need to check if the reader is finished
-            if not is_reader_finished:
-                frame = self.reader.read_frame()
-                if frame is None:
-                    is_reader_finished = True
-            else:
-                frame = None
-
-            # Prepare frame for processing
-            frame_to_process = None
-            if frame is not None:
-                frame_to_process = ProcessedFrame(frame, frame_id=frame_count)
-                non_processed_frames += 1
-
-            window = self.frame_cutter.process_frame(frame_to_process)
-            if window.finished:
-                break
-
-            if frame_count % 100 == 0:
+            
+            frame = self.__get_frame()
+            if frame_count % 50 == 0:
                 self.logger.info(
                     f"Processed {frame_count}/{self.reader.metadata.frame_count} frames"
                 )
-            frame_count += 1
+            if frame is not None:
+                processed_frame = ProcessedFrame(frame, frame_id=frame_count)
+                frame_count += 1
+            else:
+                processed_frame = None
             
-            if not window.ready:
+            # Prepare frame for processing
+            processed_window = self.single_frame_processors(processed_frame)
+            if processed_window is None:
                 continue
-            processed_frames = self.single_frame_processors.process_batch(window.frames)
-            processed_frames = processed_frames[:non_processed_frames]
             
-            for processed_frame in processed_frames:
+            for processed_frame in processed_window:
                 self.writer.write_frame(processed_frame.data)
-            non_processed_frames = 0
-
+            
+            if self.single_frame_processors.is_finished():
+                break
         self.logger.info(f"Completed processing {frame_count} frames")
 
     def finish(self) -> None:

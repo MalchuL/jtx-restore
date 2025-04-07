@@ -5,6 +5,7 @@ This module defines the ProcessorFrame class which encapsulates a video frame
 along with its metadata and position information.
 """
 
+from types import FrameType
 from typing import Dict, Any, Optional
 import numpy as np
 
@@ -25,7 +26,7 @@ class ProcessedFrame:
     
     def __init__(
         self, 
-        data: np.ndarray, 
+        data: FrameType, 
         frame_id: int, 
         metadata: Optional[Dict[str, Any]] = None
     ):
