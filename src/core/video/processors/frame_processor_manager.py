@@ -7,7 +7,7 @@ which can handle single frames and process remaining frames when input is None.
 from typing import List, Optional, Sequence
 import logging
 
-from src.core.video.frame_interpolation.frame_cutter import FrameCutter, CutterWindow
+from src.core.video.utils.frame_cutter import FrameCutter, CutterWindow
 from src.core.video.processors.frame import ProcessedFrame
 from src.core.video.processors.pipeline import ProcessorPipeline
 from src.core.video.processors.processor import FrameProcessor

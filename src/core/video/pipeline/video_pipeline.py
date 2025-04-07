@@ -10,10 +10,8 @@ import logging
 from pathlib import Path
 from typing import List, Optional, Sequence
 
-from src.core.video.frame_interpolation.frame_cutter import FrameCutter
 from src.core.video.processors.frame_processor_manager import FrameProcessorManager
 from src.core.video.processors.frame import ProcessedFrame
-from src.core.video.processors.pipeline import ProcessorPipeline
 from src.core.video.readers.video_reader import VideoMetadata, VideoReader
 from src.core.video.writers.video_writer import VideoWriter
 from src.core.video.processors.processor import FrameProcessor
