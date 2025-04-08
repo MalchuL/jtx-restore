@@ -32,19 +32,19 @@ def create_processor_pipeline() -> List[FrameProcessor]:
     """
     return [
         # Denoise the video to remove noise and artifacts
-        # DenoiseProcessor(
-        #     strength=10.0,
-        #     color_strength=10.0,
-        #     template_window_size=7,
-        #     search_window_size=21,
-        #     use_fast_nl_means=True,
-        #     num_workers=4,  # Use 4 worker processes for parallel processing
-        # ),
+        DenoiseProcessor(
+            strength=10.0,
+            color_strength=10.0,
+            template_window_size=7,
+            search_window_size=21,
+            use_fast_nl_means=True,
+            num_workers=12,  # Use 4 worker processes for parallel processing
+        ),
         # Upscale the video using RealESRGAN
         RealESRGANProcessor(
             scale=2,  # 4x upscaling
             device="cuda",  # Use CUDA if available
-            batch_size=16,  # RealESRGAN processes one frame at a time
+            batch_size=32,  # RealESRGAN processes one frame at a time
         ),
         # Enhance colors and adjust visual parameters
         # ColorCorrectionProcessor(

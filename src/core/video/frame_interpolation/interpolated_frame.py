@@ -1,8 +1,8 @@
 """
-Frame container class for video interpolation.
+Interpolated frame container class for frame interpolation.
 
 This module defines the InterpolatedFrame class which encapsulates a video frame
-along with its metadata and position information.
+along with its metadata and position information for frame interpolation.
 """
 
 from typing import Dict, Any, Optional
@@ -11,16 +11,20 @@ import numpy as np
 
 class InterpolatedFrame:
     """
-    Container for video frames with associated metadata.
+    Container for video frames with associated metadata for interpolation.
     
-    This class provides a simple container for frame data along with its 
-    frame_id and any additional metadata. It explicitly exposes the data
-    as a property to ensure transparent understanding for users.
+    This class provides a container for frame data along with its 
+    frame_id and any additional metadata specifically tailored for
+    frame interpolation operations.
     
     Note:
         Frame data is stored in RGB format, while OpenCV functions typically
-        use BGR format. Processor implementations should handle the conversion
-        when needed.
+        use BGR format. Implementations should handle the conversion when needed.
+        
+    Attributes:
+        data (np.ndarray): The frame data as a numpy array
+        frame_id (float): The position/index of the frame, can be fractional
+        metadata (Dict[str, Any]): Additional frame information
     """
     
     def __init__(
@@ -31,12 +35,12 @@ class InterpolatedFrame:
         metadata: Optional[Dict[str, Any]] = None
     ):
         """
-        Initialize a InterpolatedFrame object.
+        Initialize an InterpolatedFrame object.
         
         Args:
             data: The frame data as a numpy array in RGB format
-            frame_id: The position/index of the frame in the video sequence, 
-                can be float number for interpolated frames
+            frame_id: The position/index of the frame in the video sequence
+                     (can be fractional for interpolated frames)
             metadata: Optional dictionary containing additional frame information
         """
         self.data = data
@@ -77,4 +81,6 @@ class InterpolatedFrame:
         return self.__repr__()
     
     def __eq__(self, other):
+        if not isinstance(other, InterpolatedFrame):
+            return False
         return self.frame_id == other.frame_id and np.array_equal(self.data, other.data)
