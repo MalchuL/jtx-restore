@@ -5,17 +5,15 @@ This module implements a frame interpolator that uses OpenCV's optical flow
 methods to generate intermediate frames between existing frames.
 """
 
-from typing import List, Sequence, TypeVar, Optional
+from typing import List, Sequence, Optional
 import numpy as np
 import cv2
 
 from src.core.video.frame_interpolation.frame_interpolator import StreamingFrameInterpolator
 from src.core.video.frame_interpolation.interpolated_frame import InterpolatedFrame
 
-T = TypeVar('T', bound=InterpolatedFrame)
 
-
-class OpenCVFrameInterpolator(StreamingFrameInterpolator[T]):
+class OpenCVFrameInterpolator(StreamingFrameInterpolator[InterpolatedFrame]):
     """
     A frame interpolator that uses OpenCV's optical flow to generate intermediate frames.
     
@@ -130,8 +128,7 @@ class OpenCVFrameInterpolator(StreamingFrameInterpolator[T]):
         
         return warped
     
-    
-    def _interpolate_window(self, window: Sequence[T]) -> List[T]:
+    def _interpolate_window(self, window: Sequence[InterpolatedFrame]) -> List[InterpolatedFrame]:
         """
         Interpolate frames within a window using optical flow.
         
@@ -139,7 +136,7 @@ class OpenCVFrameInterpolator(StreamingFrameInterpolator[T]):
             window: Sequence of frames to interpolate between
             
         Returns:
-            List[T]: List of interpolated frames including originals
+            List[InterpolatedFrame]: List of interpolated frames including originals
         """
         if len(window) < 2:
             self.logger.warning(f"Need at least 2 frames for interpolation, got {len(window)}")
@@ -164,16 +161,13 @@ class OpenCVFrameInterpolator(StreamingFrameInterpolator[T]):
             # Warp both frames towards the intermediate position
             warped1 = self._warp_frame(frame1.data, flow_forward, t)
             warped2 = self._warp_frame(frame2.data, flow_backward, 1 - t)
-            # warped1 = frame1.data
-            # warped2 = frame2.data
             
             # Blend the warped frames based on the interpolation factor
             blended = (1 - t) * warped1 + t * warped2
             blended = blended.astype(np.uint8)
             
             # Create a new interpolated frame with the appropriate frame_id
-            interp_frame_id = frame1.frame_id + (frame2.frame_id - frame1.frame_id) * t
-            interp_frame = type(frame1)(
+            interp_frame = InterpolatedFrame(
                 data=blended,
                 frame_id=int(frame1.frame_id),  # Keep the base frame_id
                 dt=t,  # Store the offset in dt
