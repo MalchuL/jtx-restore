@@ -17,7 +17,7 @@ import cv2
 
 from src.core.video.readers.opencv_reader import OpenCVVideoReader
 from src.core.video.writers.opencv_writer import OpenCVVideoWriter
-from src.core.video.frame_interpolation.opencv_interpolator import OpenCVFrameInterpolator
+from src.core.video.frame_interpolation.interpolators import OpenCVFrameInterpolator
 from src.core.video.frame_interpolation.interpolated_frame import InterpolatedFrame
 
 # Set up logging

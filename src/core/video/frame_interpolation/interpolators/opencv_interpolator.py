@@ -166,7 +166,7 @@ class OpenCVFrameInterpolator(StreamingFrameInterpolator[InterpolatedFrame]):
             blended = (1 - t) * warped1 + t * warped2
             blended = blended.astype(np.uint8)
             
-            # Create a new interpolated frame with the appropriate frame_id
+            # Create a new interpolated frame
             interp_frame = InterpolatedFrame(
                 data=blended,
                 frame_id=int(frame1.frame_id),  # Keep the base frame_id

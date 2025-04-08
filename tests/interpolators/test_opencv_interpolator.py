@@ -10,8 +10,8 @@ import numpy as np
 import cv2
 from typing import List
 
-from src.core.video.frame_interpolation.opencv_interpolator import OpenCVFrameInterpolator
-from src.core.video.frame_interpolation.interpolated_frame import InterpolatedFrame
+from src.core.video.frame_interpolation import OpenCVFrameInterpolator
+from src.core.video.frame_interpolation import InterpolatedFrame
 
 
 def create_test_frame(height: int, width: int, frame_id: int, color: tuple) -> InterpolatedFrame:
