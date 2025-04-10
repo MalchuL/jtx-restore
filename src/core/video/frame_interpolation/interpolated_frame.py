@@ -52,7 +52,7 @@ class InterpolatedFrame:
     @property
     def shape(self) -> tuple:
         """Return the shape of the underlying frame data in [H, W, C] format."""
-        return self.data.shape
+        return tuple(self.data.shape)
     
     @property
     def height(self) -> int:

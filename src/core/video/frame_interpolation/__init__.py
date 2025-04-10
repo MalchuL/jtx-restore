@@ -13,11 +13,11 @@ from src.core.video.frame_interpolation.interpolated_frame import InterpolatedFr
 from src.core.video.frame_interpolation.interpolators import OpenCVFrameInterpolator
 
 # Import AI-based interpolators
-from src.core.video.frame_interpolation.ai import RIFEFrameInterpolator
+from src.core.video.frame_interpolation.ai.rife import PracticalRIFEFrameInterpolator425
 
 __all__ = [
     "StreamingFrameInterpolator",
     "InterpolatedFrame",
     "OpenCVFrameInterpolator",
-    "RIFEFrameInterpolator"
+    "PracticalRIFEFrameInterpolator425"
 ]

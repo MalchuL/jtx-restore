@@ -51,6 +51,8 @@ class FrameProcessorManager:
     def process_frame(
         self, frame: Optional[ProcessedFrame]
     ) -> Optional[List[ProcessedFrame]]:
+        if self.is_finished():
+            return None
         if frame is None:
             windows = self.frame_cutter.get_remaining_windows()
             self.is_reader_finished = True

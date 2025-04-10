@@ -9,6 +9,8 @@ from abc import ABC, abstractmethod
 from typing import List, Optional, Sequence, TypeVar, Generic
 import logging
 
+import numpy as np
+
 from src.core.video.utils.frame_cutter import FrameCutter
 from src.core.video.frame_interpolation.interpolated_frame import InterpolatedFrame
 
@@ -172,6 +174,11 @@ class StreamingFrameInterpolator(ABC, Generic[T]):
             # We have frames to interpolate
             frames_to_interpolate = interpolation_window.frames
             processed_frames = self._process_single_window(frames_to_interpolate)
+            for frame in processed_frames:
+                if processed_frames[0].height != frame.height or processed_frames[0].width != frame.width:
+                    raise ValueError(f"Interpolated frame shape is different from original frame shape, got {frame.shape} and {processed_frames[0].shape}")
+                if frame.data is None:
+                    raise ValueError("Interpolated frame data is None")
             output_frames.extend(processed_frames)
 
         return output_frames if output_frames else None
