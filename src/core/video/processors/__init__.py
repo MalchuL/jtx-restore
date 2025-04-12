@@ -9,7 +9,6 @@ various enhancers and transformations.
 # Core processor classes
 from src.core.video.processors.frame import ProcessedFrame
 from src.core.video.processors.processor import FrameProcessor
-from src.core.video.processors.pipeline import ProcessorPipeline
 
 # Import AI processors
 from src.core.video.processors.single_frame.ai import AIProcessor, HFAIProcessor
@@ -22,7 +21,6 @@ __all__ = [
     'ProcessedFrame',
     # Core processor classes
     'FrameProcessor',
-    'ProcessorPipeline',
     # AI processors
     'AIProcessor',
     'HFAIProcessor',
