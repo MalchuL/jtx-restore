@@ -15,7 +15,7 @@ from src.core.video.processors.single_frame.ai import AIProcessor, HFAIProcessor
 
 # Import enhancers subpackage
 from src.core.video.processors.single_frame.enhancers import ColorCorrectionProcessor, DenoiseProcessor, UpscaleProcessor
-from src.core.video.processors.single_frame.ai import RealESRGANProcessor
+from src.core.video.processors.single_frame.ai import RealESRGANProcessor, FBCNNProcessor
 
 __all__ = [
     # Frame data class
@@ -26,6 +26,7 @@ __all__ = [
     'AIProcessor',
     'HFAIProcessor',
     'RealESRGANProcessor',
+    'FBCNNProcessor',
     # Enhancers
     'ColorCorrectionProcessor',
     'DenoiseProcessor',

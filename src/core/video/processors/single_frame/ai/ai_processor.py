@@ -89,6 +89,7 @@ class AIProcessor(BatchProcessor, ABC):
             Preprocessed data ready for model input
         """
 
+    @abstractmethod
     def _postprocess(self, model_output: Any) -> np.ndarray:
         """Postprocess model output into a frame.
 

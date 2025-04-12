@@ -6,7 +6,7 @@ algorithm, which is designed for real-time frame interpolation.
 """
 
 import logging
-import os
+import cv2
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -90,10 +90,12 @@ class PracticalRIFEFrameInterpolator425(FrameInterpolator):
         padding = (0, pw - w, 0, ph - h)
         
         
+        frame1_data = cv2.cvtColor(frame1.data, cv2.COLOR_RGB2BGR)
+        frame2_data = cv2.cvtColor(frame2.data, cv2.COLOR_RGB2BGR)
         
         # Convert frames to tensors and normalize
-        frame1_tensor = torch.from_numpy(frame1.data).permute(2, 0, 1).float() / 255.0
-        frame2_tensor = torch.from_numpy(frame2.data).permute(2, 0, 1).float() / 255.0
+        frame1_tensor = torch.from_numpy(frame1_data).permute(2, 0, 1).float() / 255.0
+        frame2_tensor = torch.from_numpy(frame2_data).permute(2, 0, 1).float() / 255.0
         
         frame1_tensor = self._pad_image(frame1_tensor, padding)
         frame2_tensor = self._pad_image(frame2_tensor, padding)
@@ -130,7 +132,7 @@ class PracticalRIFEFrameInterpolator425(FrameInterpolator):
             tensor = tensor.squeeze(0).permute(1, 2, 0).cpu().numpy()
             tensor = np.clip(tensor * 255, 0, 255).astype(np.uint8)
         tensor = tensor[:h, :w, :]
-        
+        tensor = cv2.cvtColor(tensor, cv2.COLOR_BGR2RGB)
         # Create metadata for the interpolated frame
         metadata = {
             "interpolated": True,

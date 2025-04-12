@@ -38,40 +38,48 @@ class ProcessedFrame:
             frame_id: The position/index of the frame in the video sequence
             metadata: Optional dictionary containing additional frame information
         """
-        self.data = data
-        self.frame_id = frame_id
+        self._data = data
+        self._frame_id = frame_id
         self.metadata = metadata or {}
+    
+    @property
+    def data(self) -> np.ndarray:
+        return self._data
+    
+    @property
+    def frame_id(self) -> int:
+        return self._frame_id
     
     @property
     def shape(self) -> tuple:
         """Return the shape of the underlying frame data in [H, W, C] format."""
-        return tuple(self.data.shape)
+        return tuple(self._data.shape)
     
     @property
     def height(self) -> int:
         """Return the height of the underlying frame data."""
-        return self.data.shape[0]
+        return self._data.shape[0]
     
     @property
     def width(self) -> int:
         """Return the width of the underlying frame data."""
-        return self.data.shape[1]
+        return self._data.shape[1]
     
     @property   
     def channels(self) -> int:
         """Return the number of channels in the underlying frame data."""
-        return self.data.shape[2]
+        return self._data.shape[2]
     
     @property
     def dtype(self):
         """Return the data type of the underlying frame data."""
-        return self.data.dtype 
+        return self._data.dtype 
     
     def __repr__(self):
-        return f"ProcessedFrame(frame_id={self.frame_id}, shape={self.shape}, dtype={self.dtype})"
+        return f"ProcessedFrame(frame_id={self._frame_id}, shape={self.shape}, dtype={self.dtype})"
     
     def __str__(self):
         return self.__repr__()
     
     def __eq__(self, other):
-        return self.frame_id == other.frame_id and np.array_equal(self.data, other.data)
+        return self._frame_id == other.frame_id and np.array_equal(self._data, other.data)

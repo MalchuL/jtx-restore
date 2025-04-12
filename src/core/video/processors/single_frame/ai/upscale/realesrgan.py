@@ -55,18 +55,14 @@ class RealESRGANProcessor(AIProcessor):
         model_name: Optional[str] = None,
         device: Optional[str] = None,
         batch_size: int = 1,
-        fill_batch: bool = False,
     ):
         """Initialize RealESRGAN processor.
 
         Args:
+            scale: Scale factor for the upscaling
             model_name: Name of the RealESRGAN model to use
             device: Device to run the model on ('cuda', 'cpu', or None for auto)
             batch_size: Number of frames to process in each batch, but batch means batch size for patching
-            fill_batch: Whether to pad incomplete batches to batch_size
-            tile_size: Size of tiles for processing large images (0 for no tiling)
-            pre_pad: Pre-padding size for tiling
-            half: Whether to use half precision (FP16)
 
         Raises:
             RuntimeError: If RealESRGAN dependencies are not installed
@@ -89,6 +85,7 @@ class RealESRGANProcessor(AIProcessor):
                 f"Invalid model name: {model_name}. "
                 "Supported models: RealESRGAN_x2, RealESRGAN_x4, RealESRGAN_x8"
             )
+        self.upsampler = None
         self.scale = scale
         # Set default device if not specified
         if device is None:
