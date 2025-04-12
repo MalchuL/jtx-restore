@@ -12,10 +12,10 @@ from src.core.video.processors.processor import FrameProcessor
 from src.core.video.processors.pipeline import ProcessorPipeline
 
 # Import AI processors
-from src.core.video.processors.ai import AIProcessor, HFAIProcessor
+from src.core.video.processors.single_frame.ai import AIProcessor, HFAIProcessor
 
 # Import enhancers subpackage
-from src.core.video.processors.enhancers import ColorCorrectionProcessor, DenoiseProcessor, UpscaleProcessor
+from src.core.video.processors.single_frame.enhancers import ColorCorrectionProcessor, DenoiseProcessor, UpscaleProcessor
 
 __all__ = [
     # Frame data class

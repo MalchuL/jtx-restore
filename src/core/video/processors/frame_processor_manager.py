@@ -7,9 +7,7 @@ which can handle single frames and process remaining frames when input is None.
 from typing import List, Optional, Sequence
 import logging
 
-from src.core.video.utils.frame_cutter import FrameCutter, CutterWindow
 from src.core.video.processors.frame import ProcessedFrame
-from src.core.video.processors.pipeline import ProcessorPipeline
 from src.core.video.processors.processor import FrameProcessor
 
 
@@ -23,58 +21,74 @@ class FrameProcessorManager:
 
     Attributes:
         processors: The processor pipeline to apply to frames
-        frame_cutter: The frame cutter to use for batch processing
-        batch_size: Number of frames to process in each batch
-        frame_count: Number of frames processed so far
-        non_processed_frames: Number of frames that haven't been fully processed yet
     """
 
     def __init__(
         self,
         processors: Sequence[FrameProcessor],
-        batch_size: int = 1,
-    ) -> None:
+    ):
         """Initialize the frame processor manager.
 
         Args:
             processors: Sequence of frame processors to apply
-            batch_size: Number of frames to process in each batch
         """
-        self.processors = ProcessorPipeline(processors or [])
-        if batch_size < 1:
-            raise ValueError("Batch size must be greater than 0")
-        self.frame_cutter = FrameCutter(window_size=batch_size)
-        self.non_processed_frames = 0
-        self.is_reader_finished = False
+        self.processors = processors or []
         self.logger = logging.getLogger(__name__)
 
+    def initialize(self) -> None:
+        """Initialize the frame processor manager."""
+        for processor in self.processors:
+            processor.initialize()
+            
+    def reset(self) -> None:
+        """Reset the frame processor manager."""
+        for processor in self.processors:
+            processor.reset()
+    
+    def _run_frames(self, frames: List[ProcessedFrame], processor_id: int, do_finish: bool = False) -> List[ProcessedFrame]:
+        # If all processors have been run, return the frames
+        if processor_id >= len(self.processors):
+            return frames
+        
+        processor = self.processors[processor_id]
+        # If we need to finish the processor, get the remaining frames
+        results = []
+        # Run the next processor
+        self.logger.debug(f"Running processor {processor_id} with {len(frames)} frames {do_finish}")
+        for frame in frames:
+            result = processor(frame)
+            if result.ready:
+                processor_results = self._run_frames(result.frames, processor_id + 1, False)
+                # If last processor, return the frames we will extend
+                results.extend(processor_results)
+        if do_finish:
+            last_result = processor.finish()
+            if last_result.ready:
+                remaining_frames = last_result.frames
+            else:
+                remaining_frames = []
+            # We need to run the next processor with the remaining frames also if no remaining frames
+            remaining_results = self._run_frames(remaining_frames, processor_id + 1, True)
+            results.extend(remaining_results)
+        return results
+    
     def process_frame(
         self, frame: Optional[ProcessedFrame]
     ) -> Optional[List[ProcessedFrame]]:
-        if self.is_finished():
-            return None
+        """Process a single frame."""
+        if len(self.processors) == 0:
+            return [frame]
+        
         if frame is None:
-            windows = self.frame_cutter.get_remaining_windows()
-            self.is_reader_finished = True
+            frames = []
+            do_finish = True
         else:
-            if not isinstance(frame, ProcessedFrame):
-                raise ValueError("Frame must be a ProcessedFrame")
-            self.non_processed_frames += 1
-            window = self.frame_cutter(frame)
-            if not window.ready:
-                return None
-            windows = [window]
-        output_frames = []
-        for frame_window in windows:
-            processing_frames = frame_window.frames
-            processed_frames = self.processors.process_batch(processing_frames)
-            processed_frames = processed_frames[:self.non_processed_frames]
-            self.non_processed_frames -= len(processed_frames)
-            output_frames.extend(processed_frames)
-        return output_frames
-    
-    def is_finished(self) -> bool:
-        return self.is_reader_finished and self.non_processed_frames <= 0
+            frames = [frame]
+            do_finish = False
+        results = self._run_frames(frames, 0, do_finish)
+        return results
 
-    def __call__(self, frame: Optional[ProcessedFrame]) -> Optional[List[ProcessedFrame]]:
+    def __call__(
+        self, frame: Optional[ProcessedFrame]
+    ) -> Optional[List[ProcessedFrame]]:
         return self.process_frame(frame)

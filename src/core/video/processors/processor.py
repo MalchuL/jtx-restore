@@ -10,6 +10,7 @@ import abc
 from typing import List, Optional, Sequence
 
 from src.core.video.processors.frame import ProcessedFrame
+from src.core.video.processors.processor_result import ProcessorResult
 
 
 class FrameProcessor(abc.ABC):
@@ -27,7 +28,12 @@ class FrameProcessor(abc.ABC):
     def __init__(self):
         """Initialize the frame processor."""
         self._is_initialized = False
+        self._finished = False
 
+    @property
+    def is_finished(self) -> bool:
+        """Check if the processor has finished processing."""
+        return self._finished
 
     @property
     def requires_initialization(self) -> bool:
@@ -50,7 +56,7 @@ class FrameProcessor(abc.ABC):
         self._is_initialized = True
 
     @abc.abstractmethod
-    def process_frame(self, frame: ProcessedFrame) -> ProcessedFrame:
+    def _process_frame(self, frame: ProcessedFrame) -> ProcessorResult:
         """Process a single frame.
 
         Args:
@@ -61,41 +67,40 @@ class FrameProcessor(abc.ABC):
         """
         pass
 
-    def process_batch(self, frames: Sequence[ProcessedFrame]) -> List[ProcessedFrame]:
-        """Process a batch of frames.
-
-        The default implementation processes frames sequentially.
-        Subclasses can override this to implement batch optimizations.
-
-        Args:
-            frames (Sequence[ProcessorFrame]): List of input frames to process in RGB format
-
-        Returns:
-            List of processed frames in RGB format
-        """
-        if not frames:
-            return []
-
-        if self.requires_initialization and not self._is_initialized:
-            self.initialize()
-
-        results = []
-        for frame in frames:
-            processed = self.process_frame(frame)
-            results.append(processed)
-
-        return results
-
-    def __call__(self, frame: ProcessedFrame) -> ProcessedFrame:
+    def __call__(self, frame: ProcessedFrame) -> ProcessorResult:
         """Process a single frame (callable interface).
 
         Args:
-            frame (ProcessorFrame): The input frame to process in RGB format
+            frame (ProcessorFrame): The input frame to process in RGB format.
 
         Returns:
-            ProcessorFrame: The processed frame in RGB format
+            Optional[List[ProcessorFrame]]: The processed frames in RGB format.
         """
         if self.requires_initialization and not self._is_initialized:
             self.initialize()
 
-        return self.process_frame(frame)
+        if self.is_finished:
+            return ProcessorResult(frames=[], ready=False)
+
+        if frame is None:
+            raise ValueError("Frame is None")
+        result = self._process_frame(frame)
+        return result
+
+    def finish(self) -> ProcessorResult:
+        """Finish the processing.
+
+        Returns:
+            ProcessorResult: The result of the processing. Used to process the remaining frames.
+        """
+        self._finished = True
+        return self._do_finish()
+
+    def _do_finish(self) -> ProcessorResult:
+        return ProcessorResult(frames=[], ready=False)
+
+    
+    def reset(self) -> None:
+        """Reset the processor."""
+        self._is_initialized = False
+        self._finished = False
