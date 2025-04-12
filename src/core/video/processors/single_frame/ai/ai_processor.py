@@ -48,14 +48,6 @@ class AIProcessor(BatchProcessor, ABC):
         self.model = None
         self.processor = None
 
-    @property
-    def requires_initialization(self) -> bool:
-        """Whether the processor requires explicit initialization.
-
-        Returns:
-            bool: True since AI processors always need initialization
-        """
-        return True
 
     def initialize(self) -> None:
         """Initialize the AI model and processor.
@@ -65,7 +57,7 @@ class AIProcessor(BatchProcessor, ABC):
         """
         if not self._is_initialized:
             self._load_model()
-            self._is_initialized = True
+        super().initialize()
 
     @abstractmethod
     def _load_model(self) -> None:

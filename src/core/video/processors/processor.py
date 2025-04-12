@@ -35,22 +35,11 @@ class FrameProcessor(abc.ABC):
         """Check if the processor has finished processing."""
         return self._finished
 
-    @property
-    def requires_initialization(self) -> bool:
-        """Indicates if the processor requires explicit initialization before use.
-
-        Some processors may need to load models or allocate resources before processing.
-
-        Returns:
-            bool: True if initialization is required, False otherwise
-        """
-        return False
 
     def initialize(self) -> None:
         """Initialize the processor if needed.
 
-        This method should be called before processing any frames if
-        requires_initialization is True. It can be used to load models,
+        This method should be called before processing any frames. It can be used to load models,
         allocate GPU memory, etc.
         """
         self._is_initialized = True
@@ -76,7 +65,7 @@ class FrameProcessor(abc.ABC):
         Returns:
             Optional[List[ProcessorFrame]]: The processed frames in RGB format.
         """
-        if self.requires_initialization and not self._is_initialized:
+        if not self._is_initialized:
             self.initialize()
 
         if self.is_finished:
