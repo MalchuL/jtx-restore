@@ -23,7 +23,7 @@ class BatchProcessor(FrameProcessor):
         super().__init__()
         self.batch_size = batch_size
         self._num_frames = 0
-        self.cutter = self._create_cutter()
+        self._cutter = self._create_cutter()
         self.logger = logging.getLogger(__name__)
 
     def _create_cutter(self) -> FrameCutter[ProcessedFrame]:
@@ -59,7 +59,7 @@ class BatchProcessor(FrameProcessor):
             The processed frame in RGB format, or None if processing failed
         """
         self._num_frames += 1
-        batch = self.cutter(frame)
+        batch = self._cutter(frame)
         if not batch.ready:
             return ProcessorResult(frames=[], ready=False)
         if len(batch.frames) == 0:
@@ -76,7 +76,7 @@ class BatchProcessor(FrameProcessor):
         return ProcessorResult(frames=processed_frames, ready=True)
 
     def _do_finish(self) -> ProcessorResult:
-        remaining_frames = self.cutter.get_remaining_windows()
+        remaining_frames = self._cutter.get_remaining_windows()
         if len(remaining_frames) > 1:
             raise RuntimeError("More than one remaining batch")
         results = []
@@ -86,6 +86,8 @@ class BatchProcessor(FrameProcessor):
                     f"Remaining frames are not equal to batch size {len(batch.frames)} != {self.batch_size}"
                 )
             processed_frames = self._process_single_batch(batch.frames)
+            if len(processed_frames) != self.batch_size:
+                raise RuntimeError("Output frames are not equal to batch size")
             processed_frames = self._cut_frames(processed_frames)
             if len(processed_frames) == 0:
                 raise RuntimeError("Output frames are empty")
@@ -96,4 +98,4 @@ class BatchProcessor(FrameProcessor):
     def reset(self) -> None:
         super().reset()
         self._num_frames = 0
-        self.cutter.reset()
+        self._cutter.reset()

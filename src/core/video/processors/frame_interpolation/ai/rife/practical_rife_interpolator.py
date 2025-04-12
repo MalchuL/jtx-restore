@@ -12,12 +12,13 @@ import torch
 import torch.nn.functional as F
 from typing import List, Optional, Sequence, Tuple, Dict, Any
 
-from src.core.video.frame_interpolation.frame_interpolator import StreamingFrameInterpolator
-from src.core.video.frame_interpolation.interpolated_frame import InterpolatedFrame
-from src.core.video.frame_interpolation.ai.rife.practical_rife_4_25 import Model
+from src.core.video.processors.frame import ProcessedFrame
+from src.core.video.processors.frame_interpolation.frame_interpolator import FrameInterpolator
+from src.core.video.processors.frame_interpolation.interpolated_frame import InterpolatedFrame
+from src.core.video.processors.frame_interpolation.ai.rife.practical_rife_4_25 import Model
 
 
-class PracticalRIFEFrameInterpolator425(StreamingFrameInterpolator[InterpolatedFrame]):
+class PracticalRIFEFrameInterpolator425(FrameInterpolator):
     """
     Practical RIFE (Real-Time Intermediate Flow Estimation) frame interpolator.
     
@@ -141,7 +142,7 @@ class PracticalRIFEFrameInterpolator425(StreamingFrameInterpolator[InterpolatedF
         
         return InterpolatedFrame(data=tensor, frame_id=frame_id, dt=dt, metadata=metadata)
     
-    def _interpolate_window(self, window: Sequence[InterpolatedFrame]) -> List[InterpolatedFrame]:
+    def _interpolate_window(self, window: Sequence[ProcessedFrame]) -> List[InterpolatedFrame]:
         """
         Interpolate frames within a window using the RIFE model.
         

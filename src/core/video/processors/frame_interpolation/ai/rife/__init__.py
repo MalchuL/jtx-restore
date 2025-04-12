@@ -5,6 +5,6 @@ This package provides frame interpolator implementations based on the RIFE
 (Real-Time Intermediate Flow Estimation) algorithm.
 """
 
-from src.core.video.frame_interpolation.ai.rife.practical_rife_interpolator import PracticalRIFEFrameInterpolator425
+from src.core.video.processors.frame_interpolation.ai.rife.practical_rife_interpolator import PracticalRIFEFrameInterpolator425
 
 __all__ = ["PracticalRIFEFrameInterpolator425"]

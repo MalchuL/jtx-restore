@@ -9,11 +9,14 @@ from typing import List, Sequence, Optional
 import numpy as np
 import cv2
 
-from src.core.video.frame_interpolation.frame_interpolator import StreamingFrameInterpolator
-from src.core.video.frame_interpolation.interpolated_frame import InterpolatedFrame
+from src.core.video.processors.frame import ProcessedFrame
+from src.core.video.processors.frame_interpolation.frame_interpolator import FrameInterpolator
+from src.core.video.processors.frame_interpolation.interpolated_frame import InterpolatedFrame
 
 
-class OpenCVFrameInterpolator(StreamingFrameInterpolator[InterpolatedFrame]):
+
+
+class OpenCVFrameInterpolator(FrameInterpolator):
     """
     A frame interpolator that uses OpenCV's optical flow to generate intermediate frames.
     
@@ -128,7 +131,7 @@ class OpenCVFrameInterpolator(StreamingFrameInterpolator[InterpolatedFrame]):
         
         return warped
     
-    def _interpolate_window(self, window: Sequence[InterpolatedFrame]) -> List[InterpolatedFrame]:
+    def _interpolate_window(self, window: Sequence[ProcessedFrame]) -> List[InterpolatedFrame]:
         """
         Interpolate frames within a window using optical flow.
         

@@ -84,6 +84,8 @@ class FrameProcessor(abc.ABC):
 
         if frame is None:
             raise ValueError("Frame is None")
+        if not isinstance(frame, ProcessedFrame):
+            raise ValueError(f"Frame is not a ProcessedFrame, got {type(frame)}")
         result = self._process_frame(frame)
         return result
 
