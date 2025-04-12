@@ -8,6 +8,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Optional, Tuple, Union, Dict
@@ -40,23 +41,17 @@ class FFmpegVideoWriter(VideoWriter[FrameType]):
     # Codec presets with their default settings
     CODEC_PRESETS = {
         "libx264": {
-            "preset": "medium",
-            "crf": "23",
             "pix_fmt": "yuv420p",
         },
         "libx265": {
-            "preset": "medium",
-            "crf": "28",
             "pix_fmt": "yuv420p",
         },
         "libvpx-vp9": {
             "cpu-used": "4",
-            "crf": "31",
             "b:v": "0",
         },
         "libvpx": {
             "cpu-used": "4",
-            "crf": "31",
             "b:v": "0",
         },
         "mpeg4": {
@@ -122,6 +117,8 @@ Or using Scoop:
         ffmpeg_args: Optional[list] = None,
         temp_dir: Optional[Union[str, Path]] = None,
         image_format: str = "png",
+        quality: int = 80,
+        compression_preset: str = "medium",
     ):
         """Initialize the FFmpeg video writer.
 
@@ -133,6 +130,7 @@ Or using Scoop:
             ffmpeg_args: Additional FFmpeg arguments (default: None)
             temp_dir: Directory for temporary image files (default: None, creates temp dir)
             image_format: Format of image files (default: "png")
+            quality: Quality of the video (default: 100)
         Raises:
             FFmpegNotInstalledError: If FFmpeg is not installed on the system
         """
@@ -149,7 +147,14 @@ Or using Scoop:
         self._image_writer = None
         
         self._image_format = image_format
-
+        self.quality = quality
+        if self.quality < 0 or self.quality > 100:
+            raise ValueError(f"Quality must be between 0 and 100, got: {self.quality}")
+        self.compression_preset = compression_preset
+        # Check if the compression preset is available
+        available_presets = ["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "veryslow"]
+        if self.compression_preset not in available_presets:
+            raise ValueError(f"Compression preset must be one of: {available_presets}, got: {self.compression_preset}")
         # Determine codec if not provided
         if self._codec is None:
             self._codec = self._select_codec()
@@ -159,6 +164,60 @@ Or using Scoop:
                 raise ValueError(
                     f"Codec '{self._codec}' is not available on this system"
                 )
+        
+        # Check if we can create a video with the current settings
+        if not self._check_can_create_video():
+            raise RuntimeError(
+                f"Unable to create video with codec '{self._codec}' and current settings. Try to change extension or codec."
+            )
+
+    def _check_can_create_video(self) -> bool:
+        """Check if a video can be created with the current codec and settings.
+        
+        Uses a temporary folder to create a small test video to validate the configuration.
+        
+        Returns:
+            bool: True if video creation is possible, False otherwise
+        """
+        with TemporaryDirectory() as temp_dir:
+            temp_dir_path = Path(temp_dir)
+            test_images_dir = temp_dir_path / "test_images"
+            test_images_dir.mkdir(exist_ok=True)
+            
+            # Create a small blank test image (1x1 pixel)
+            test_image_path = test_images_dir / f"frame_00000001.{self._image_format}"
+            try:
+                # Create a single blank frame using numpy
+                blank_frame = np.zeros((256, 256, 3), dtype=np.uint8)
+                
+                # Save the frame using ImageWriter's internal save method
+                # This is a simplified approach - we're directly using PIL for this test
+                import PIL.Image
+                PIL.Image.fromarray(blank_frame).save(test_image_path)
+                
+                # Try to convert to video
+                test_video_path = temp_dir_path / f"test_video{self.output_path.suffix}"
+                
+                # Build FFmpeg command
+                input_pattern = str(test_images_dir / f"frame_%08d.{self._image_format}")
+                
+                # Get the FFmpeg command and run it
+                cmd = self._build_ffmpeg_command(input_pattern, str(test_video_path))
+                
+                # Run FFmpeg
+                result = subprocess.run(
+                    cmd, 
+                    check=False,
+                    capture_output=True, 
+                    text=True
+                )
+                
+                # Check if the video was created successfully
+                return result.returncode == 0 and test_video_path.exists()
+                
+            except Exception as e:
+                self.logger.warning(f"Video creation check failed: {str(e)}")
+                return False
 
     def _is_ffmpeg_installed(self) -> bool:
         """Check if FFmpeg is installed on the system.
@@ -242,6 +301,23 @@ Or using Scoop:
                 args.extend([f"-{key}", str(value)])
 
         return args
+    
+    def _get_crf(self) -> int:
+        """Get the CRF value for the selected codec.
+
+        Returns:
+            list: The CRF value
+        """
+        crf = round((1 - self.quality / 100) * 51)
+        return ["-crf", str(crf)]
+    
+    def _get_compression_preset(self) -> list:
+        """Get the compression preset for the selected codec.
+
+        Returns:
+            list: The compression preset
+        """
+        return ["-preset", self.compression_preset]
 
     def _initialize(self) -> None:
         """Initialize the writer and create temporary directory if needed."""
@@ -294,16 +370,16 @@ Or using Scoop:
         """Get the image folder name."""
         return self._temp_dir_path / self._image_writer.IMAGE_FOLDER
 
-    def _convert_to_video(self) -> None:
-        """Convert image sequence to video using FFmpeg."""
-        # Build FFmpeg command
-        if not os.path.exists(self._get_image_folder()):
-            raise RuntimeError(f"Image folder does not exist: {self._get_image_folder()}")
-        if len(os.listdir(self._get_image_folder())) == 0:
-            raise RuntimeError(f"Image folder is empty: {self._get_image_folder()}")
-        input_pattern = str(self._get_image_folder() / "frame_%08d.png")
-        output_path = str(self.output_path)
-
+    def _build_ffmpeg_command(self, input_pattern: str, output_path: str) -> list:
+        """Build the FFmpeg command with all necessary arguments.
+        
+        Args:
+            input_pattern: Input file pattern for FFmpeg
+            output_path: Output video path
+            
+        Returns:
+            list: Complete FFmpeg command as a list of arguments
+        """
         # Base command
         cmd = [
             "ffmpeg",
@@ -316,12 +392,28 @@ Or using Scoop:
 
         # Add codec-specific arguments
         cmd.extend(self._get_codec_args())
-
+        cmd.extend(self._get_crf())
+        cmd.extend(self._get_compression_preset())
         # Add additional FFmpeg arguments
         cmd.extend(self.ffmpeg_args)
 
         # Add output path
         cmd.append(output_path)
+        
+        return cmd
+
+    def _convert_to_video(self) -> None:
+        """Convert image sequence to video using FFmpeg."""
+        # Build FFmpeg command
+        if not os.path.exists(self._get_image_folder()):
+            raise RuntimeError(f"Image folder does not exist: {self._get_image_folder()}")
+        if len(os.listdir(self._get_image_folder())) == 0:
+            raise RuntimeError(f"Image folder is empty: {self._get_image_folder()}")
+        input_pattern = str(self._get_image_folder() / f"frame_%08d.{self._image_format}")
+        output_path = str(self.output_path)
+
+        # Get the FFmpeg command
+        cmd = self._build_ffmpeg_command(input_pattern, output_path)
 
         # Run FFmpeg
         try:

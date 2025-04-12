@@ -20,6 +20,7 @@ from src.core.video.processors import (
     RealESRGANProcessor,
     FrameProcessor,
 )
+from src.core.video.processors import FBCNNProcessor
 
 logging.basicConfig(level=logging.INFO)
 
@@ -32,14 +33,7 @@ def create_processor_pipeline() -> List[FrameProcessor]:
     """
     return [
         # Denoise the video to remove noise and artifacts
-        DenoiseProcessor(
-            strength=10.0,
-            color_strength=10.0,
-            template_window_size=7,
-            search_window_size=21,
-            use_fast_nl_means=True,
-            num_workers=12,  # Use 4 worker processes for parallel processing
-        ),
+        FBCNNProcessor(),
         # Upscale the video using RealESRGAN
         RealESRGANProcessor(
             scale=2,  # 4x upscaling
