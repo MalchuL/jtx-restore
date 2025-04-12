@@ -1,7 +1,6 @@
 from collections import deque
 from typing import Deque, Generic, List, Optional, TypeVar
 from dataclasses import dataclass
-from src.core.video.processors.frame import ProcessedFrame
 
 
 T = TypeVar("T")
