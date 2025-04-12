@@ -36,7 +36,7 @@ class DefaultVideoPipeline:
             processors: Optional sequence of frame processors to apply.
             batch_size: Number of frames to process in each batch.
         """
-        self.single_frame_processors = FrameProcessorManager(processors or [], batch_size=batch_size)
+        self.frame_processors = FrameProcessorManager(processors or [])
         self.reader: Optional[VideoReader] = None
         self.writer: Optional[VideoWriter] = None
 
@@ -128,14 +128,14 @@ class DefaultVideoPipeline:
                 processed_frame = None
             
             # Prepare frame for processing
-            processed_window = self.single_frame_processors(processed_frame)
+            processed_window = self.frame_processors(processed_frame)
             if processed_window is None:
                 continue
             
             for processed_frame in processed_window:
                 self.writer.write_frame(processed_frame.data)
             
-            if self.single_frame_processors.is_finished():
+            if self.frame_processors.is_finished:
                 break
         self.logger.info(f"Completed processing {frame_count} frames")
 

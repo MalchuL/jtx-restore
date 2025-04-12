@@ -14,12 +14,12 @@ from pathlib import Path
 from typing import List
 
 from src.core.video.pipeline.opencv_ffmpeg_pipeline import OpenCVFFmpegPipeline
-from src.core.video.processors.enhancers import (
+from src.core.video.processors import (
     ColorCorrectionProcessor,
     DenoiseProcessor,
+    RealESRGANProcessor,
+    FrameProcessor,
 )
-from src.core.video.processors.ai.upscale.realesrgan import RealESRGANProcessor
-from src.core.video.processors.processor import FrameProcessor
 
 logging.basicConfig(level=logging.INFO)
 

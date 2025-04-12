@@ -47,13 +47,13 @@ class MockBatchProcessor(BatchProcessor):
     def __init__(self, batch_size: int, processor_id: str):
         super().__init__(batch_size=batch_size)
         self.processor_id = processor_id
-        self.processed_windows = []
+        self.processed_batches = []
     
-    def _process_single_window(self, window: Sequence[ProcessedFrame]) -> List[ProcessedFrame]:
-        """Process a window of frames."""
-        self.processed_windows.append(window)
+    def _process_single_batch(self, batch: Sequence[ProcessedFrame]) -> List[ProcessedFrame]:
+        """Process a batch of frames."""
+        self.processed_batches.append(batch)
         result_frames = []
-        for frame in window:
+        for frame in batch:
             # Clone the frame to avoid modifying the original
             new_frame = ProcessedFrame(
                 data=frame.data.copy(),

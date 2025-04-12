@@ -11,8 +11,8 @@ from src.core.video.processors.single_frame.parallel_processor import ParallelPr
 class MockBatchProcessor(BatchProcessor):
     """Concrete implementation for testing BatchProcessor."""
     
-    def _process_single_window(self, window: Sequence[ProcessedFrame]) -> List[ProcessedFrame]:
-        return list(window)
+    def _process_single_batch(self, batch: Sequence[ProcessedFrame]) -> List[ProcessedFrame]:
+        return list(batch)
 
 
 class MockParallelProcessor(ParallelProcessor):

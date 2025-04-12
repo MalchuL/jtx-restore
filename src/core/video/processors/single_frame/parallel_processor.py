@@ -8,7 +8,7 @@ from src.core.video.processors.single_frame.batch_processor import (
 
 
 class ParallelProcessor(BatchProcessor):
-    def __init__(self, num_workers: Optional[int] = None):
+    def __init__(self, num_workers: int = 1):
         super().__init__(batch_size=num_workers)
         self._executor = None
 
@@ -34,11 +34,11 @@ class ParallelProcessor(BatchProcessor):
     def _process_frame_parallel(frame: ProcessedFrame, **kwargs) -> ProcessedFrame:
         pass
 
-    def _process_single_window(
-        self, window: Sequence[ProcessedFrame]
+    def _process_single_batch(
+        self, batch: Sequence[ProcessedFrame]
     ) -> List[ProcessedFrame]:
         
-        frames = window
+        frames = batch
         # If there is only one worker or the number of frames, process sequentially
         if 0 <= self.num_workers <= 1 or len(frames) < 3:
             results = []

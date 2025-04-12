@@ -19,7 +19,7 @@ from src.core.video.utils.frame_cutter import FrameCutter
 
 class BatchProcessor(FrameProcessor):
 
-    def __init__(self, batch_size: Optional[int] = None):
+    def __init__(self, batch_size: int = 1):
         super().__init__()
         self.batch_size = batch_size
         self._num_frames = 0
@@ -37,10 +37,17 @@ class BatchProcessor(FrameProcessor):
         return frames[: self._num_frames]
 
     @abstractmethod
-    def _process_single_window(
-        self, window: Sequence[ProcessedFrame]
+    def _process_single_batch(
+        self, batch: Sequence[ProcessedFrame]
     ) -> List[ProcessedFrame]:
-        pass
+        """Process a single batch of frames.
+
+        Args:
+            batch: The batch of frames to process in the same order as the input frames and always the same size as the batch size
+
+        Returns:
+            The processed frames in the same order as the input frames
+        """
 
     def _process_frame(self, frame: ProcessedFrame) -> ProcessorResult:
         """Process a single frame.
@@ -52,12 +59,16 @@ class BatchProcessor(FrameProcessor):
             The processed frame in RGB format, or None if processing failed
         """
         self._num_frames += 1
-        window = self.cutter(frame)
-        if not window.ready:
+        batch = self.cutter(frame)
+        if not batch.ready:
             return ProcessorResult(frames=[], ready=False)
-        if len(window.frames) == 0:
-            raise ValueError("Window is empty")
-        processed_frames = self._process_single_window(window.frames)
+        if len(batch.frames) == 0:
+            raise ValueError("Batch is empty")
+        if len(batch.frames) != self.batch_size:
+            raise RuntimeError(
+                f"Batch frames are not equal to batch size {len(batch.frames)} != {self.batch_size}"
+            )
+        processed_frames = self._process_single_batch(batch.frames)
         processed_frames = self._cut_frames(processed_frames)
         if len(processed_frames) == 0:
             raise RuntimeError("Output frames are empty")
@@ -67,10 +78,14 @@ class BatchProcessor(FrameProcessor):
     def _do_finish(self) -> ProcessorResult:
         remaining_frames = self.cutter.get_remaining_windows()
         if len(remaining_frames) > 1:
-            raise RuntimeError("More than one remaining window")
+            raise RuntimeError("More than one remaining batch")
         results = []
-        for window in remaining_frames:
-            processed_frames = self._process_single_window(window.frames)
+        for batch in remaining_frames:
+            if len(batch.frames) != self.batch_size:
+                raise RuntimeError(
+                    f"Remaining frames are not equal to batch size {len(batch.frames)} != {self.batch_size}"
+                )
+            processed_frames = self._process_single_batch(batch.frames)
             processed_frames = self._cut_frames(processed_frames)
             if len(processed_frames) == 0:
                 raise RuntimeError("Output frames are empty")
