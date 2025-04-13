@@ -11,7 +11,7 @@ from src.core.video.readers.opencv_reader import OpenCVVideoReader
 from src.core.video.readers.video_reader import VideoMetadata
 from src.core.video.writers.ffmpeg_writer import FFmpegVideoWriter
 from src.core.video.processors.processor import FrameProcessor
-from src.core.video.pipeline.video_pipeline import DefaultVideoPipeline
+from .video_pipeline import DefaultVideoPipeline
 from src.core.video.types import FrameType
 
 
@@ -35,7 +35,6 @@ class OpenCVFFmpegPipeline(DefaultVideoPipeline):
         input_path: Path,
         output_path: Path,
         processors: Optional[Sequence[FrameProcessor]] = None,
-        batch_size: int = 1,
         upscale_coefficient: float = 1.0,
     ) -> None:
         """Initialize the OpenCV FFmpeg pipeline.
@@ -47,7 +46,7 @@ class OpenCVFFmpegPipeline(DefaultVideoPipeline):
             batch_size: Number of frames to process in each batch
             upscale_coefficient: Coefficient to scale the output frame size (e.g., 2.0 for 2x upscaling)
         """
-        super().__init__(processors=processors, batch_size=batch_size)
+        super().__init__(processors=processors)
         self.input_path = input_path
         self.output_path = output_path
         self.upscale_coefficient = upscale_coefficient

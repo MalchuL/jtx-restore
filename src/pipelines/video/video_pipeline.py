@@ -28,7 +28,6 @@ class DefaultVideoPipeline:
     def __init__(
         self,
         processors: Optional[Sequence[FrameProcessor]] = None,
-        batch_size: int = 1,
     ) -> None:
         """Initialize the video pipeline.
 
