@@ -13,7 +13,7 @@ import logging
 from pathlib import Path
 from typing import List
 
-from src.core.video.pipeline.opencv_ffmpeg_pipeline import OpenCVFFmpegPipeline
+from src.pipelines.video.opencv_ffmpeg_pipeline import OpenCVFFmpegPipeline
 from src.core.video.processors import (
     ColorCorrectionProcessor,
     DenoiseProcessor,
@@ -69,8 +69,6 @@ def main():
         input_path=args.input_path,
         output_path=args.output_path,
         processors=create_processor_pipeline(),
-        batch_size=12,
-        upscale_coefficient=2.0,  # Match RealESRGAN's 4x upscaling
     )
 
     # Process the video

@@ -34,6 +34,18 @@ class VideoMetadata:
     codec: str
     color_space: str = "RGB"
     bit_depth: int = 8
+    
+    def copy(self) -> "VideoMetadata":
+        return VideoMetadata(
+            width=self.width,
+            height=self.height,
+            fps=self.fps,
+            frame_count=self.frame_count,
+            duration=self.duration,
+            codec=self.codec,
+            color_space=self.color_space,
+            bit_depth=self.bit_depth,
+        )
 
     def __str__(self) -> str:
         return (

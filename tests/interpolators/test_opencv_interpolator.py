@@ -10,7 +10,7 @@ import numpy as np
 import cv2
 from typing import List
 
-from src.core.video.processors.frame_info import FrameInfo
+from src.core.video.processors.processor_info import ProcessorInfo
 from src.core.video.processors.frame_interpolation.interpolated_frame import InterpolatedFrame
 from src.core.video.processors.frame_interpolation.interpolators.opencv_interpolator import OpenCVFrameInterpolator
 
@@ -253,7 +253,8 @@ class TestOpenCVFrameInterpolator:
     def test_frame_info_update(self):
         """Test that frame info is updated correctly."""
         interpolator = OpenCVFrameInterpolator(factor=2)
-        frame_info = FrameInfo(fps=25, frame_width=1920, frame_height=1080)
-        updated_frame_info = interpolator.update_frame_info(frame_info)
-        assert updated_frame_info.fps == 50
-        assert updated_frame_info.frame_width == 1920
+        frame_info = ProcessorInfo()
+        updated_frame_info = interpolator.update_processor_info(frame_info)
+        assert updated_frame_info.fps_scale == 2
+        assert updated_frame_info.frame_width_scale == 1
+        assert updated_frame_info.frame_height_scale == 1

@@ -9,7 +9,7 @@ import logging
 
 from src.core.video.processors.frame import ProcessedFrame
 from src.core.video.processors.processor import FrameProcessor
-
+from src.core.video.processors.processor_info import ProcessorInfo
 
 class FrameProcessorManager:
     """Manages frame processing operations for video pipeline.
@@ -111,3 +111,10 @@ class FrameProcessorManager:
         self, frame: Optional[ProcessedFrame]
     ) -> Optional[List[ProcessedFrame]]:
         return self.process_frame(frame)
+
+    def get_processor_info(self) -> ProcessorInfo:
+        """Get the processor info."""
+        processor_info = ProcessorInfo()
+        for processor in self.processors:
+            processor_info = processor.update_processor_info(processor_info)
+        return processor_info

@@ -35,7 +35,6 @@ class OpenCVFFmpegPipeline(DefaultVideoPipeline):
         input_path: Path,
         output_path: Path,
         processors: Optional[Sequence[FrameProcessor]] = None,
-        upscale_coefficient: float = 1.0,
     ) -> None:
         """Initialize the OpenCV FFmpeg pipeline.
 
@@ -49,7 +48,6 @@ class OpenCVFFmpegPipeline(DefaultVideoPipeline):
         super().__init__(processors=processors)
         self.input_path = input_path
         self.output_path = output_path
-        self.upscale_coefficient = upscale_coefficient
 
     def _create_reader(self) -> OpenCVVideoReader:
         """Create an OpenCV video reader instance.
@@ -79,28 +77,3 @@ class OpenCVFFmpegPipeline(DefaultVideoPipeline):
             # Use PNG format for temporary images to maintain quality
             image_format="png"
         )
-
-    def update_metadata(self, metadata: VideoMetadata) -> VideoMetadata:
-        """Update the metadata of the video.
-
-        This implementation scales the frame dimensions according to the upscale coefficient
-        while preserving other metadata properties.
-
-        Args:
-            metadata (VideoMetadata): The metadata of the video
-
-        Returns:
-            VideoMetadata: The updated metadata of the video
-        """
-        # Create a copy of the metadata to avoid modifying the original
-        updated_metadata = VideoMetadata(
-            width=int(metadata.width * self.upscale_coefficient),
-            height=int(metadata.height * self.upscale_coefficient),
-            fps=metadata.fps,
-            frame_count=metadata.frame_count,
-            duration=metadata.duration,
-            codec=metadata.codec,
-            color_space=metadata.color_space,
-            bit_depth=metadata.bit_depth,
-        )
-        return updated_metadata 

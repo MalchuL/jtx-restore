@@ -74,6 +74,11 @@ class DefaultVideoPipeline:
         Returns:
             VideoMetadata: The updated metadata of the video.
         """
+        processor_info = self.frame_processors.get_processor_info()
+        metadata = metadata.copy()
+        metadata.fps = metadata.fps * processor_info.fps_scale
+        metadata.width = int(metadata.width * processor_info.frame_width_scale)
+        metadata.height = int(metadata.height * processor_info.frame_height_scale)
         return metadata
 
     def setup(self) -> None:
