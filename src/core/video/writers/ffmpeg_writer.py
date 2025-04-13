@@ -116,6 +116,7 @@ Or using Scoop:
         codec: Optional[str] = None,
         ffmpeg_args: Optional[list] = None,
         temp_dir: Optional[Union[str, Path]] = None,
+        cleanup_temp_dir: bool = True,
         image_format: str = "png",
         quality: int = 80,
         compression_preset: str = "medium",
@@ -129,6 +130,7 @@ Or using Scoop:
             codec: FFmpeg codec to use (default: None, auto-select based on extension)
             ffmpeg_args: Additional FFmpeg arguments (default: None)
             temp_dir: Directory for temporary image files (default: None, creates temp dir)
+            cleanup_temp_dir: Whether to cleanup the temp dir after writing the video (default: True)
             image_format: Format of image files (default: "png")
             quality: Quality of the video (default: 100)
         Raises:
@@ -144,6 +146,7 @@ Or using Scoop:
 
         self.ffmpeg_args = ffmpeg_args or []
         self._temp_dir = Path(temp_dir) if temp_dir else None
+        self.cleanup_temp_dir = cleanup_temp_dir
         self._image_writer = None
         
         self._image_format = image_format
@@ -361,7 +364,7 @@ Or using Scoop:
         self._convert_to_video()
 
         # Clean up temporary directory
-        if isinstance(self._temp_dir, TemporaryDirectory):
+        if isinstance(self._temp_dir, TemporaryDirectory) and self.cleanup_temp_dir:
             self._temp_dir.cleanup()
 
         self._is_open = False
