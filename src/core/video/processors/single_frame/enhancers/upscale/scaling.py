@@ -10,6 +10,7 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union, Any
 import cv2
 import numpy as np
 
+from src.core.video.processors.frame_info import FrameInfo
 from src.core.video.processors.processor import FrameProcessor
 from src.core.video.processors.frame import ProcessedFrame
 from src.core.video.processors.single_frame.parallel_processor import ParallelProcessor
@@ -94,4 +95,11 @@ class UpscaleProcessor(ParallelProcessor):
 
         return ProcessedFrame(
             data=result_data, frame_id=frame.frame_id, metadata=frame.metadata
+        )
+
+    def update_frame_info(self, frame_info: FrameInfo) -> FrameInfo:
+        return FrameInfo(
+            fps=frame_info.fps,
+            frame_width=int(frame_info.frame_width * self.scale_factor),
+            frame_height=int(frame_info.frame_height * self.scale_factor),
         )

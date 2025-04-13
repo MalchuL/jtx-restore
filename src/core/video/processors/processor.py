@@ -10,6 +10,7 @@ import abc
 from typing import List, Optional, Sequence
 
 from src.core.video.processors.frame import ProcessedFrame
+from src.core.video.processors.frame_info import FrameInfo
 from src.core.video.processors.processor_result import ProcessorResult
 
 
@@ -90,6 +91,8 @@ class FrameProcessor(abc.ABC):
     def _do_finish(self) -> ProcessorResult:
         return ProcessorResult(frames=[], ready=False)
 
+    def update_frame_info(self, frame_info: FrameInfo) -> FrameInfo:
+        return frame_info.copy()
     
     def reset(self) -> None:
         """Reset the processor."""

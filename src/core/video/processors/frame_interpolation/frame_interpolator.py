@@ -12,6 +12,7 @@ import logging
 import numpy as np
 
 from src.core.video.processors.frame import ProcessedFrame
+from src.core.video.processors.frame_info import FrameInfo
 from src.core.video.processors.processor import FrameProcessor
 from src.core.video.processors.processor_result import ProcessorResult
 from src.core.video.utils.frame_cutter import FrameCutter
@@ -210,3 +211,10 @@ class FrameInterpolator(FrameProcessor):
                 raise RuntimeError("Output frames are empty")
             results.extend(processed_frames)
         return ProcessorResult(frames=results, ready=len(results) > 0)
+    
+    def update_frame_info(self, frame_info: FrameInfo) -> FrameInfo:
+        return FrameInfo(
+            fps=frame_info.fps * self.factor,
+            frame_width=frame_info.frame_width,
+            frame_height=frame_info.frame_height,
+        )   

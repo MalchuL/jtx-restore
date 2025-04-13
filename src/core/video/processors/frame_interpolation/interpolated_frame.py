@@ -48,7 +48,9 @@ class InterpolatedFrame(ProcessedFrame):
         """
         super().__init__(data, frame_id, metadata)
         assert 0 <= dt < 1, f"dt must be in range [0, 1), got {dt}"
-        self.metadata = metadata or {"dt": dt}
+        metadata = metadata or {}
+        metadata["dt"] = dt
+        self.metadata = metadata
 
     @property
     def dt(self) -> float:

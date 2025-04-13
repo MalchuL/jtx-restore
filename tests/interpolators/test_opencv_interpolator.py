@@ -10,8 +10,11 @@ import numpy as np
 import cv2
 from typing import List
 
-from src.core.video.frame_interpolation import OpenCVFrameInterpolator
-from src.core.video.frame_interpolation import InterpolatedFrame
+from src.core.video.processors.frame_info import FrameInfo
+from src.core.video.processors.frame_interpolation.interpolated_frame import InterpolatedFrame
+from src.core.video.processors.frame_interpolation.interpolators.opencv_interpolator import OpenCVFrameInterpolator
+
+
 
 
 def create_test_frame(height: int, width: int, frame_id: int, color: tuple) -> InterpolatedFrame:
@@ -135,6 +138,7 @@ class TestOpenCVFrameInterpolator:
         
         # Check that we get 3 frames
         assert len(result) == 3
+        print(result)
         
         # Check that the first and last frames are the originals
         assert result[0] == frames[0]
@@ -169,22 +173,22 @@ class TestOpenCVFrameInterpolator:
         frames = create_test_frames(3)
         
         # First frame should return None (not enough frames yet)
-        result1 = interpolator.process_frame(frames[0])
-        assert result1 is None
+        result1 = interpolator(frames[0])
+        assert not result1.ready
         
         # Second frame should return two frames (original and interpolated)
-        result2 = interpolator.process_frame(frames[1])
-        assert result2 is not None
-        assert len(result2) == 2
+        result2 = interpolator(frames[1])
+        assert result2.ready
+        assert len(result2.frames) == 2
         
         # Check that we get the first frame and an interpolated frame
-        assert result2[0] == frames[0]
-        assert result2[1].metadata.get('interpolated') == True
+        assert result2.frames[0] == frames[0]
+        assert result2.frames[1].metadata.get('interpolated') == True
         
         # Third frame should return two more frames
-        result3 = interpolator.process_frame(frames[2])
-        assert result3 is not None
-        assert len(result3) == 2
+        result3 = interpolator(frames[2])
+        assert result3.ready
+        assert len(result3.frames) == 2
         
     def test_different_optical_flow_methods(self):
         """Test interpolation with different optical flow methods."""
@@ -225,14 +229,14 @@ class TestOpenCVFrameInterpolator:
         # Process frames one by one
         all_results = []
         for frame in frames:
-            result = interpolator.process_frame(frame)
+            result = interpolator(frame)
             if result:
-                all_results.extend(result)
+                all_results.extend(result.frames)
         
         # Process remaining frames
-        final_result = interpolator.process_frame(None)
+        final_result = interpolator.finish()
         if final_result:
-            all_results.extend(final_result)
+            all_results.extend(final_result.frames)
         
         # Check that we have the expected number of output frames
         # For 5 input frames with factor=2, we should get 9 output frames
@@ -240,8 +244,16 @@ class TestOpenCVFrameInterpolator:
         
         # Check that every other frame is an original frame
         for i in range(0, len(all_results), 2):
-            assert all_results[i].metadata.get('interpolated', False) == False
+            assert not all_results[i].metadata.get('interpolated', False)
         
         # Check that the remaining frames are interpolated
         for i in range(1, len(all_results), 2):
             assert all_results[i].metadata.get('interpolated') == True 
+            
+    def test_frame_info_update(self):
+        """Test that frame info is updated correctly."""
+        interpolator = OpenCVFrameInterpolator(factor=2)
+        frame_info = FrameInfo(fps=25, frame_width=1920, frame_height=1080)
+        updated_frame_info = interpolator.update_frame_info(frame_info)
+        assert updated_frame_info.fps == 50
+        assert updated_frame_info.frame_width == 1920

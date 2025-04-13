@@ -38,6 +38,7 @@ except ImportError:
 REALESRGAN_AVAILABLE = TORCH_AVAILABLE and REALESRGAN_AVAILABLE
 
 from src.core.video.processors.frame import ProcessedFrame
+from src.core.video.processors.frame_info import FrameInfo
 from src.core.video.processors.single_frame.ai.ai_processor import AIProcessor
 
 
@@ -155,3 +156,10 @@ class RealESRGANProcessor(AIProcessor):
             output = self.upsampler.predict(img, batch_size=self._num_patches)
             outputs.append(output)
         return outputs
+
+    def update_frame_info(self, frame_info: FrameInfo) -> FrameInfo:
+        return FrameInfo(
+            fps=frame_info.fps,
+            frame_width=int(frame_info.frame_width * self.scale),
+            frame_height=int(frame_info.frame_height * self.scale),
+        )
