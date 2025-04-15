@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 import cv2
 
-from src.core.video.readers.opencv_reader import OpenCVVideoReader
+from src.core.video.frames.readers.opencv_reader import OpenCVVideoReader
 
 
 class TestOpenCVVideoReader:

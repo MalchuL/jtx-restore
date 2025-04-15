@@ -13,8 +13,8 @@ import numpy as np
 import pytest
 import cv2
 
-from src.core.video.writers.image_writer import ImageWriter
-from src.core.video.types import FrameType
+from src.core.video.frames.writers.image_writer import ImageWriter
+from src.core.video.frames.types import FrameType
 
 
 def create_test_frame(width: int = 640, height: int = 480) -> np.ndarray:

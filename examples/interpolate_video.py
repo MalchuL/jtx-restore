@@ -15,10 +15,10 @@ from pathlib import Path
 import numpy as np
 import cv2
 
-from src.core.video.readers.opencv_reader import OpenCVVideoReader
-from src.core.video.writers.opencv_writer import OpenCVVideoWriter
-from src.core.video.frame_interpolation.interpolators import OpenCVFrameInterpolator
-from src.core.video.frame_interpolation.interpolated_frame import InterpolatedFrame
+from src.core.video.frames.readers.opencv_reader import OpenCVVideoReader
+from src.core.video.frames.writers.opencv_writer import OpenCVVideoWriter
+from src.core.video.frames.frame_interpolation.interpolators import OpenCVFrameInterpolator
+from src.core.video.frames.frame_interpolation.interpolated_frame import InterpolatedFrame
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, 

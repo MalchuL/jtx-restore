@@ -10,9 +10,9 @@ import numpy as np
 import cv2
 from typing import List
 
-from src.core.video.processors.processor_info import ProcessorInfo
-from src.core.video.processors.frame_interpolation.interpolated_frame import InterpolatedFrame
-from src.core.video.processors.frame_interpolation.interpolators.opencv_interpolator import OpenCVFrameInterpolator
+from src.core.video.frames.processors.processor_info import ProcessorInfo
+from src.core.video.frames.processors.frame_interpolation.interpolated_frame import InterpolatedFrame
+from src.core.video.frames.processors.frame_interpolation.interpolators.opencv_interpolator import OpenCVFrameInterpolator
 
 
 

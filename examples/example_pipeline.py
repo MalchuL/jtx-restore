@@ -14,13 +14,13 @@ from pathlib import Path
 from typing import List
 
 from src.pipelines.video.opencv_ffmpeg_pipeline import OpenCVFFmpegPipeline
-from src.core.video.processors import (
+from src.core.video.frames.processors import (
     ColorCorrectionProcessor,
     DenoiseProcessor,
     RealESRGANProcessor,
     FrameProcessor,
 )
-from src.core.video.processors import FBCNNProcessor
+from src.core.video.frames.processors import FBCNNProcessor
 
 logging.basicConfig(level=logging.INFO)
 

@@ -6,8 +6,8 @@ from pathlib import Path
 import tempfile
 import shutil
 
-from src.core.video.writers.opencv_writer import OpenCVVideoWriter
-from src.core.video.readers.opencv_reader import OpenCVVideoReader
+from src.core.video.frames.writers.opencv_writer import OpenCVVideoWriter
+from src.core.video.frames.readers.opencv_reader import OpenCVVideoReader
 
 
 @pytest.fixture

@@ -6,8 +6,8 @@ import tempfile
 import shutil
 import os
 
-from src.core.video.readers.opencv_reader import OpenCVVideoReader
-from src.core.video.readers.folder_cache import FolderCacheReader
+from src.core.video.frames.readers.opencv_reader import OpenCVVideoReader
+from src.core.video.frames.readers.folder_cache import FolderCacheReader
 
 
 @pytest.fixture

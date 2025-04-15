@@ -10,12 +10,12 @@ import logging
 from pathlib import Path
 from typing import List, Optional, Sequence
 
-from src.core.video.processors.frame_processor_manager import FrameProcessorManager
-from src.core.video.processors.frame import ProcessedFrame
-from src.core.video.readers.video_reader import VideoMetadata, VideoReader
-from src.core.video.writers.video_writer import VideoWriter
-from src.core.video.processors.processor import FrameProcessor
-from src.core.video.types import FrameType
+from src.core.video.frames.processors.frame_processor_manager import FrameProcessorManager
+from src.core.video.frames.processors.frame import ProcessedFrame
+from src.core.video.frames.readers.video_reader import VideoMetadata, VideoReader
+from src.core.video.frames.writers.video_writer import VideoWriter
+from src.core.video.frames.processors.processor import FrameProcessor
+from src.core.video.frames.types import FrameType
 
 
 class DefaultVideoPipeline:

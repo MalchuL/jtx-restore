@@ -11,9 +11,9 @@ import cv2
 import numpy as np
 from typing import List, Optional
 
-from src.core.video.processors.frame_interpolation.ai.rife import PracticalRIFEFrameInterpolator425
-from src.core.video.processors.frame_interpolation.interpolated_frame import InterpolatedFrame
-from src.core.video.processors.frame_interpolation.interpolators.opencv_interpolator import OpenCVFrameInterpolator
+from src.core.video.frames.processors.frame_interpolation.ai.rife import PracticalRIFEFrameInterpolator425
+from src.core.video.frames.processors.frame_interpolation.interpolated_frame import InterpolatedFrame
+from src.core.video.frames.processors.frame_interpolation.interpolators.opencv_interpolator import OpenCVFrameInterpolator
 
 
 def setup_logging():

@@ -7,8 +7,8 @@ import numpy as np
 import pytest
 import cv2
 
-from src.core.video.processors.enhancers.upscale.scaling import UpscaleProcessor
-from src.core.video.processors.frame import ProcessedFrame
+from src.core.video.frames.processors.enhancers.upscale.scaling import UpscaleProcessor
+from src.core.video.frames.processors.frame import ProcessedFrame
 
 raise NotImplementedError("Upscaling processor is not implemented yet.")
 @pytest.fixture

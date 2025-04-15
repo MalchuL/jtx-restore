@@ -23,7 +23,7 @@ project_root = Path(__file__).parent.parent.absolute()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from src.core.video.writers.opencv_writer import OpenCVVideoWriter
+from src.core.video.frames.writers.opencv_writer import OpenCVVideoWriter
 
 
 def create_frame(frame_index, width=640, height=480):

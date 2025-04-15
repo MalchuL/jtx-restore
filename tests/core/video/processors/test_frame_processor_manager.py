@@ -4,12 +4,12 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 from typing import List, Optional, Sequence
 
-from src.core.video.processors.frame import ProcessedFrame
-from src.core.video.processors.frame_processor_manager import FrameProcessorManager
-from src.core.video.processors.processor import FrameProcessor
-from src.core.video.processors.processor_result import ProcessorResult
-from src.core.video.processors.single_frame.batch_processor import BatchProcessor
-from src.core.video.processors.single_frame.parallel_processor import ParallelProcessor
+from src.core.video.frames.processors.frame import ProcessedFrame
+from src.core.video.frames.processors.frame_processor_manager import FrameProcessorManager
+from src.core.video.frames.processors.processor import FrameProcessor
+from src.core.video.frames.processors.processor_result import ProcessorResult
+from src.core.video.frames.processors.single_frame.batch_processor import BatchProcessor
+from src.core.video.frames.processors.single_frame.parallel_processor import ParallelProcessor
 
 
 class MockProcessor(FrameProcessor):

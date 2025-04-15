@@ -7,12 +7,12 @@ OpenCVVideoReader for reading frames and FFmpegVideoWriter for writing frames.
 from pathlib import Path
 from typing import Optional, Sequence
 
-from src.core.video.readers.opencv_reader import OpenCVVideoReader
-from src.core.video.readers.video_reader import VideoMetadata
-from src.core.video.writers.ffmpeg_writer import FFmpegVideoWriter
-from src.core.video.processors.processor import FrameProcessor
+from src.core.video.frames.readers.opencv_reader import OpenCVVideoReader
+from src.core.video.frames.readers.video_reader import VideoMetadata
+from src.core.video.frames.writers.ffmpeg_writer import FFmpegVideoWriter
+from src.core.video.frames.processors.processor import FrameProcessor
 from .video_pipeline import DefaultVideoPipeline
-from src.core.video.types import FrameType
+from src.core.video.frames.types import FrameType
 
 
 class OpenCVFFmpegPipeline(DefaultVideoPipeline):
