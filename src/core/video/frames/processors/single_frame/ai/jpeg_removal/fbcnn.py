@@ -15,7 +15,7 @@ from typing import Any, Optional, List
 import numpy as np
 from PIL import Image
 import requests
-import pyrootutils
+import rootutils
 from src.core.video.frames.processors.single_frame.ai.jpeg_removal.torch_models.fbcnn import FBCNN
 
 
@@ -109,7 +109,7 @@ class FBCNNProcessor(AIProcessor):
         """
         # Initialize model
         if self.model_name is None:
-            path = pyrootutils.find_root(search_from=__file__, indicator=".project-root")
+            path = rootutils.find_root(search_from=__file__, indicator=".project-root")
             model_name = os.path.join(path, self.WEIGHTS_PATH)
         if not os.path.exists(model_name):
             self._download_model(model_name)
