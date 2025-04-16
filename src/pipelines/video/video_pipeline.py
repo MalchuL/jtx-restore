@@ -36,6 +36,7 @@ class DefaultVideoPipeline:
             batch_size: Number of frames to process in each batch.
         """
         self.frame_processors = FrameProcessorManager(processors or [])
+        self.frame_processors.reset()  # Reset the frame processors to avoid using old state
         self.reader: Optional[VideoReader] = None
         self.writer: Optional[VideoWriter] = None
 
@@ -79,6 +80,7 @@ class DefaultVideoPipeline:
         metadata.fps = metadata.fps * processor_info.fps_scale
         metadata.width = int(metadata.width * processor_info.frame_width_scale)
         metadata.height = int(metadata.height * processor_info.frame_height_scale)
+        metadata.frame_count = int(metadata.frame_count * processor_info.fps_scale)
         return metadata
 
     def setup(self) -> None:
@@ -98,6 +100,8 @@ class DefaultVideoPipeline:
             f"Pipeline configured for {metadata.width}x{metadata.height} "
             f"video at {metadata.fps} FPS"
         )
+        self.logger.info(f"Processor info: {self.frame_processors.get_processor_info()}")
+        self.logger.info(f"Output video metadata: {metadata}")
 
     def __get_frame(self) -> Optional[ProcessedFrame]:
         # Not all readers can always return None after the end of the video

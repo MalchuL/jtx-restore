@@ -214,3 +214,8 @@ class FrameInterpolator(FrameProcessor):
     
     def update_processor_info(self, processor_info: ProcessorInfo) -> ProcessorInfo:
         return processor_info.set_fps_scale(self.factor)
+    
+    def reset(self):
+        self._used_frames_count = 0
+        self._cutter.reset()
+        super().reset()

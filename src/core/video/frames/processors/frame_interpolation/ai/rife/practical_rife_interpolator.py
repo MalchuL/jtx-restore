@@ -8,6 +8,7 @@ algorithm, which is designed for real-time frame interpolation.
 import logging
 import cv2
 import numpy as np
+import rootutils
 import torch
 import torch.nn.functional as F
 from typing import List, Optional, Sequence, Tuple, Dict, Any
@@ -33,6 +34,9 @@ class PracticalRIFEFrameInterpolator425(FrameInterpolator):
         scale (float): Scale factor for the model (1.0 for original resolution)
     """
     
+    WEIGHTS_PATH = "weights/practical_rife_4_25"  # Without the model file name
+    WEIGHTS_URL = "https://drive.google.com/file/d/1ZKjcbmt1hypiFprJPIKW0Tt0lr_2i7bg/view"
+    
     def __init__(
         self, 
         factor: float = 2.0,
@@ -56,9 +60,17 @@ class PracticalRIFEFrameInterpolator425(FrameInterpolator):
         self._model = None
         self.logger = logging.getLogger(__name__)
         
-        # Load the model if a path is provided
-        if model_path:
+        if self.model_path is None:
+            self.model_path = rootutils.find_root(search_from=__file__, indicator=".project-root") / self.WEIGHTS_PATH
+            self.logger.info(f"Using default model path: {self.model_path}")
+    
+    
+    
+    def initialize(self) -> None:
+        """Initialize the RIFE model."""
+        if self._model is None:
             self._load_model()
+        super().initialize()
     
     def _load_model(self) -> None:
         """Load the RIFE model from the specified path."""

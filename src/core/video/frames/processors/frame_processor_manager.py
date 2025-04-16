@@ -39,7 +39,11 @@ class FrameProcessorManager:
         """Initialize the frame processor manager."""
         for processor in self.processors:
             processor.initialize()
-
+    
+    def is_initialized(self) -> bool:
+        """Check if the frame processor manager is initialized."""
+        return all(processor.is_initialized for processor in self.processors)
+    
     def reset(self) -> None:
         """Reset the frame processor manager."""
         for processor in self.processors:

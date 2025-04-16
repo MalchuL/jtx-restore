@@ -44,6 +44,11 @@ class FrameProcessor(abc.ABC):
         allocate GPU memory, etc.
         """
         self._is_initialized = True
+        
+    @property
+    def is_initialized(self) -> bool:
+        """Check if the processor is initialized."""
+        return self._is_initialized
 
     @abc.abstractmethod
     def _process_frame(self, frame: ProcessedFrame) -> ProcessorResult:

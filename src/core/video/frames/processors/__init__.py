@@ -16,6 +16,7 @@ from src.core.video.frames.processors.single_frame.ai import AIProcessor, HFAIPr
 # Import enhancers subpackage
 from src.core.video.frames.processors.single_frame.enhancers import ColorCorrectionProcessor, DenoiseProcessor, UpscaleProcessor
 from src.core.video.frames.processors.single_frame.ai import RealESRGANProcessor, FBCNNProcessor
+from src.core.video.frames.processors.frame_interpolation import FrameInterpolator, PracticalRIFEFrameInterpolator425
 
 __all__ = [
     # Frame data class
@@ -31,4 +32,7 @@ __all__ = [
     'ColorCorrectionProcessor',
     'DenoiseProcessor',
     'UpscaleProcessor',
+    # Frame Interpolators
+    'FrameInterpolator',
+    'PracticalRIFEFrameInterpolator425',
 ] 

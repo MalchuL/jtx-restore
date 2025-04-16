@@ -45,8 +45,7 @@ class AIProcessor(BatchProcessor, ABC):
         self.batch_size = max(1, batch_size)
 
         # Initialize model and processor
-        self.model = None
-        self.processor = None
+        self._is_model_loaded = False
 
 
     def initialize(self) -> None:
@@ -55,8 +54,9 @@ class AIProcessor(BatchProcessor, ABC):
         This method should be overridden by subclasses to implement
         specific model loading logic.
         """
-        if not self._is_initialized:
+        if not self._is_model_loaded:
             self._load_model()
+            self._is_model_loaded = True
         super().initialize()
 
     @abstractmethod
@@ -95,6 +95,7 @@ class AIProcessor(BatchProcessor, ABC):
             Processed frame data as numpy array
         """
 
+    @abstractmethod
     def _infer_model(self, inputs: List[Any], *args, **kwargs) -> List[Any]:
         """Run model inference on a batch of inputs.
 
@@ -107,7 +108,6 @@ class AIProcessor(BatchProcessor, ABC):
         Returns:
             List of model outputs
         """
-        return self.model(inputs, *args, **kwargs)
 
     def _process_single_batch(
         self, batch: Sequence[ProcessedFrame]

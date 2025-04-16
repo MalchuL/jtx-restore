@@ -35,6 +35,7 @@ class OpenCVFFmpegPipeline(DefaultVideoPipeline):
         input_path: Path,
         output_path: Path,
         processors: Optional[Sequence[FrameProcessor]] = None,
+        quality: int = 80,
     ) -> None:
         """Initialize the OpenCV FFmpeg pipeline.
 
@@ -48,6 +49,7 @@ class OpenCVFFmpegPipeline(DefaultVideoPipeline):
         super().__init__(processors=processors)
         self.input_path = input_path
         self.output_path = output_path
+        self.quality = quality
 
     def _create_reader(self) -> OpenCVVideoReader:
         """Create an OpenCV video reader instance.
@@ -75,5 +77,6 @@ class OpenCVFFmpegPipeline(DefaultVideoPipeline):
             # Use default FFmpeg arguments for high quality
             ffmpeg_args=None,
             # Use PNG format for temporary images to maintain quality
-            image_format="png"
+            image_format="png",
+            quality=self.quality,
         )
