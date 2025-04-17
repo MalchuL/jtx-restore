@@ -27,13 +27,18 @@ class OpenCVFrameInterpolator(FrameInterpolator):
         optical_flow_params (dict): Parameters for the optical flow algorithm
     """
     
-    def __init__(self, factor: float = 2, optical_flow_method: str = 'farneback'):
+    def __init__(self, factor: int = 2, optical_flow_method: str = 'farneback'):
         """
         Initialize the OpenCV frame interpolator.
         
         Args:
-            factor: The frame rate increase factor (e.g., 2 doubles the frame rate)
+            factor: The frame rate increase factor (e.g., 2 doubles the frame rate).
+                   Must be a positive integer.
             optical_flow_method: The optical flow method to use ('farneback' or 'dis')
+            
+        Raises:
+            TypeError: If factor is not an integer
+            ValueError: If factor is less than 1 or if optical_flow_method is not supported
         """
         super().__init__(factor=factor)
         self.optical_flow_method = optical_flow_method
@@ -152,8 +157,8 @@ class OpenCVFrameInterpolator(FrameInterpolator):
         flow_forward = self._calculate_optical_flow(frame1.data, frame2.data)
         flow_backward = self._calculate_optical_flow(frame2.data, frame1.data)
         
-        # Number of intermediate frames to generate
-        n_interp = int(self.factor - 1)
+        # Number of intermediate frames to generate (factor - 1)
+        n_interp = self.factor - 1
         
         result = [frame1]  # Start with the first frame
         

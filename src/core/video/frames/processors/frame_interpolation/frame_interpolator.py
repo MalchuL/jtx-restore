@@ -6,7 +6,7 @@ by generating intermediate frames between existing frames using various interpol
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Sequence, TypeVar, Generic
+from typing import List, Optional, Sequence, TypeVar, Generic, Union
 import logging
 
 import numpy as np
@@ -34,32 +34,46 @@ class FrameInterpolator(FrameProcessor):
 
     Attributes:
         cutter (FrameCutter[T]): Frame cutter for managing frame windows
-        factor (float): The frame rate increase factor (e.g., 2 doubles the frame rate)
+        factor (int): The frame rate increase factor (e.g., 2 doubles the frame rate)
         _used_frames_count (int): Counter for processed input frames
         finished (bool): Flag indicating whether processing is complete
         logger: Logger instance for this class
     """
 
-    def __init__(self, factor: float = 2):
+    def __init__(self, factor: int = 2):
         """
         Initialize the streaming frame interpolator.
 
         Args:
-            factor: The frame rate increase factor (e.g., 2 doubles the frame rate)
+            factor: The frame rate increase factor (e.g., 2 doubles the frame rate).
+                   Must be a positive integer.
+                   
+        Raises:
+            TypeError: If factor is not an integer
+            ValueError: If factor is less than 1
         """
         super().__init__()
-        self._cutter = self._create_cutter()
+        
+        # Type check for factor
+        if not isinstance(factor, int):
+            raise TypeError(f"Factor must be an integer, got {type(factor).__name__}")
+        
+        # Value check for factor
+        if factor < 1:
+            raise ValueError(f"Factor must be a positive integer, got {factor}")
+            
         self._factor = factor
+        self._cutter = self._create_cutter()
         self._used_frames_count = 0
         self.logger = logging.getLogger(__name__)
 
     @property
-    def factor(self) -> float:
+    def factor(self) -> int:
         """
         Get the frame rate increase factor.
 
         Returns:
-            float: The frame rate increase factor
+            int: The frame rate increase factor
         """
         return self._factor
 
@@ -82,7 +96,7 @@ class FrameInterpolator(FrameProcessor):
         Returns:
             int: The number of frames added to the buffer
         """
-        return round(self._factor)
+        return self._factor
 
     def _create_cutter(self) -> FrameCutter[ProcessedFrame]:
         """

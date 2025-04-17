@@ -30,7 +30,7 @@ class PracticalRIFEFrameInterpolator425(FrameInterpolator):
         model_path (str): Path to the pre-trained RIFE model
         device (str): Device to run the model on ('cuda' or 'cpu')
         _model (Model): The loaded RIFE model
-        _factor (float): The frame rate increase factor
+        _factor (int): The frame rate increase factor
         scale (float): Scale factor for the model (1.0 for original resolution)
     """
     
@@ -39,7 +39,7 @@ class PracticalRIFEFrameInterpolator425(FrameInterpolator):
     
     def __init__(
         self, 
-        factor: float = 2.0,
+        factor: int = 2,
         model_path: Optional[str] = None,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
         scale: float = 1.0
@@ -48,10 +48,15 @@ class PracticalRIFEFrameInterpolator425(FrameInterpolator):
         Initialize the RIFE interpolator.
         
         Args:
-            factor: The frame rate increase factor (e.g., 2.0 doubles the frame rate)
+            factor: The frame rate increase factor (e.g., 2 doubles the frame rate).
+                   Must be a positive integer.
             model_path: Path to the pre-trained RIFE model directory
             device: Device to run the model on ('cuda' or 'cpu')
             scale: Scale factor for the model (1.0 for original resolution)
+            
+        Raises:
+            TypeError: If factor is not an integer
+            ValueError: If factor is less than 1
         """
         super().__init__(factor=factor)
         self.model_path = model_path
@@ -187,7 +192,7 @@ class PracticalRIFEFrameInterpolator425(FrameInterpolator):
         interpolated_frames.append(frame1)
         
         # Calculate the number of intermediate frames to generate
-        num_intermediate = int(self.factor) - 1
+        num_intermediate = self.factor - 1
         
         # Generate intermediate frames
         for i in range(1, num_intermediate + 1):
