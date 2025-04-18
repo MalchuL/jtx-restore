@@ -1,0 +1,2 @@
+frame_interpolator:
+  _target_: src.core.video.frames.processors.PracticalRIFEFrameInterpolator425

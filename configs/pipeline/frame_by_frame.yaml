@@ -1,0 +1,5 @@
+
+defaults:
+  - default.yaml
+  - processor: [jpeg_removal, rife_interpolator, realesrgan_2x]
+

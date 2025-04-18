@@ -1,0 +1,5 @@
+upscaler: 
+  _target_: src.core.video.frames.processors.RealESRGANProcessor
+  scale: 2
+  device: cuda
+  batch_size: 32

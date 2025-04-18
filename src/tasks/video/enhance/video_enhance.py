@@ -24,6 +24,12 @@ class VideoEnhanceTask:
             ".mov",
             ".flv",
             ".wmv",
+            ".webm",
+            ".m4v",
+            ".m4a",
+            ".m4b",
+            ".m4p",
+            ".m4v"
         ),
         quality: int = 80,
     ):
