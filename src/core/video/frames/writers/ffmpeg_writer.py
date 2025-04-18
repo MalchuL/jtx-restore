@@ -325,11 +325,10 @@ Or using Scoop:
     def _initialize(self) -> None:
         """Initialize the writer and create temporary directory if needed."""
 
-        if self._temp_dir is None:
-            self._temp_dir = TemporaryDirectory()
-            self._temp_dir_path = Path(self._temp_dir.name)
-        else:
-            self._temp_dir_path = self._temp_dir
+        if self._temp_dir is not None and not os.path.exists(self._temp_dir):
+            os.makedirs(self._temp_dir, exist_ok=True)
+        self._temp_dir = TemporaryDirectory(dir=self._temp_dir)
+        self._temp_dir_path = Path(self._temp_dir.name)
 
         self.logger.info(f"Initializing image writer with output path: {self._temp_dir_path}")
         # Create image writer

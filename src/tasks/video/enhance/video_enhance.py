@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import List
+from typing import Any, Dict, List, Optional
 
 from src.core.video.frames.processors import FrameProcessor
 from src.pipelines.merger.ffmpeg_video_audio_merger import (
@@ -32,13 +32,17 @@ class VideoEnhanceTask:
             ".m4v"
         ),
         quality: int = 80,
+        writer_kwargs: Optional[Dict[str, Any]] = None,
+        reader_kwargs: Optional[Dict[str, Any]] = None,
     ):
         self.processors = processors
         self._video_folder = Path(video_folder)
         self._output_folder = Path(output_folder)
         self._supported_extensions = supported_extensions
         self.quality = quality
-
+        self.writer_kwargs = writer_kwargs or {}
+        self.reader_kwargs = reader_kwargs or {}
+        
     def _create_video_pipeline(
         self, video_file: str, output_file: str
     ) -> DefaultVideoPipeline:
@@ -47,6 +51,8 @@ class VideoEnhanceTask:
             output_path=output_file,
             processors=self.processors,
             quality=self.quality,
+            writer_kwargs=self.writer_kwargs,
+            reader_kwargs=self.reader_kwargs,
         )
         return pipeline
 

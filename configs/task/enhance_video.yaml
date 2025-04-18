@@ -13,3 +13,7 @@ video_folder: ??? # path to the video folder or a single video file (supported e
 output_folder: ??? # path to the output folder or a single output file
 quality: 80 # quality of the output video
 supported_extensions: [mp4, mov, avi, mkv, m4v, m4a, m4b, m4p, m4v, webm, wmv, flv, mpeg, mpg] # supported extensions of the input video
+
+writer_kwargs:
+  temp_dir: null
+reader_kwargs:

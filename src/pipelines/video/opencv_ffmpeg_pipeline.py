@@ -5,7 +5,7 @@ OpenCVVideoReader for reading frames and FFmpegVideoWriter for writing frames.
 """
 
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 from src.core.video.frames.readers.opencv_reader import OpenCVVideoReader
 from src.core.video.frames.readers.video_reader import VideoMetadata
@@ -36,6 +36,8 @@ class OpenCVFFmpegPipeline(DefaultVideoPipeline):
         output_path: Path,
         processors: Optional[Sequence[FrameProcessor]] = None,
         quality: int = 80,
+        writer_kwargs: Optional[Dict[str, Any]] = None,
+        reader_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Initialize the OpenCV FFmpeg pipeline.
 
@@ -50,6 +52,8 @@ class OpenCVFFmpegPipeline(DefaultVideoPipeline):
         self.input_path = input_path
         self.output_path = output_path
         self.quality = quality
+        self.writer_kwargs = writer_kwargs or {}
+        self.reader_kwargs = reader_kwargs or {}
 
     def _create_reader(self) -> OpenCVVideoReader:
         """Create an OpenCV video reader instance.
@@ -57,7 +61,7 @@ class OpenCVFFmpegPipeline(DefaultVideoPipeline):
         Returns:
             OpenCVVideoReader: A new OpenCV video reader instance
         """
-        return OpenCVVideoReader(self.input_path)
+        return OpenCVVideoReader(self.input_path, **self.reader_kwargs)
 
     def _create_writer(self, metadata: VideoMetadata) -> FFmpegVideoWriter:
         """Create an FFmpeg video writer instance.
@@ -79,4 +83,5 @@ class OpenCVFFmpegPipeline(DefaultVideoPipeline):
             # Use PNG format for temporary images to maintain quality
             image_format="png",
             quality=self.quality,
+            **self.writer_kwargs,
         )

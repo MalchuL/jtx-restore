@@ -53,6 +53,8 @@ def enhance(cfg: DictConfig):
         processors=processors,
         video_folder=video_folder,
         output_folder=output_folder,
+        writer_kwargs=cfg.get("writer_kwargs", {}),
+        reader_kwargs=cfg.get("reader_kwargs", {}),
     )
     task.enhance()
     log.info("Enhance task")
