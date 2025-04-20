@@ -33,9 +33,18 @@ class BatchProcessor(FrameProcessor):
             begin_non_overlap=0,
         )
 
-    def _cut_frames(self, frames: List[ProcessedFrame]) -> List[ProcessedFrame]:
-        return frames[: self._num_frames]
+    def _cut_frames(self, frames: List[ProcessedFrame], cut_processed_frames: bool = True) -> List[ProcessedFrame]:
+        """Cut the frames to get output frame sequence. Used to process after interpolation to match sequence ordering.
 
+        Args:
+            frames: List of frames to cut
+            cut_processed_frames: Whether to cut the processed frames or batch size
+
+        Returns:
+            List of frames
+        """
+        slice_end = self._num_frames if cut_processed_frames else self.batch_size
+        return frames[0: slice_end]
     @abstractmethod
     def _process_single_batch(
         self, batch: Sequence[ProcessedFrame]
@@ -69,26 +78,28 @@ class BatchProcessor(FrameProcessor):
                 f"Batch frames are not equal to batch size {len(batch.frames)} != {self.batch_size}"
             )
         processed_frames = self._process_single_batch(batch.frames)
+        if len(processed_frames) != self.batch_size:
+            raise RuntimeError(
+                f"Processed frames are not equal to batch size {len(processed_frames)} != {self.batch_size}"
+            )
         processed_frames = self._cut_frames(processed_frames)
         if len(processed_frames) == 0:
             raise RuntimeError("Output frames are empty")
-        self._num_frames = 0
+        self._num_frames = max(0, self._num_frames - self.batch_size)
         return ProcessorResult(frames=processed_frames, ready=True)
 
     def _do_finish(self) -> ProcessorResult:
         remaining_frames = self._cutter.get_remaining_windows()
-        if len(remaining_frames) > 1:
-            raise RuntimeError("More than one remaining batch")
         results = []
-        for batch in remaining_frames:
-            if len(batch.frames) != self.batch_size:
-                raise RuntimeError(
-                    f"Remaining frames are not equal to batch size {len(batch.frames)} != {self.batch_size}"
-                )
+        for i, batch in enumerate(remaining_frames):
+            is_last = i == len(remaining_frames) - 1
             processed_frames = self._process_single_batch(batch.frames)
             if len(processed_frames) != self.batch_size:
-                raise RuntimeError("Output frames are not equal to batch size")
-            processed_frames = self._cut_frames(processed_frames)
+                raise RuntimeError(
+                    f"Processed frames are not equal to batch size {len(processed_frames)} != {self.batch_size}"
+                )
+            processed_frames = self._cut_frames(processed_frames, is_last)
+            self._num_frames = max(0, self._num_frames - self.batch_size)
             if len(processed_frames) == 0:
                 raise RuntimeError("Output frames are empty")
             results.extend(processed_frames)

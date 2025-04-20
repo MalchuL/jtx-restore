@@ -82,7 +82,7 @@ class FrameCutter(Generic[T]):
             raise ValueError("begin_non_overlap must be less than window - non_overlap")
 
         self._processed_frames = 0
-        self._frames: Deque[T] = deque()
+        self._frames: Deque[T] = deque(maxlen=self.window_size)
         self._padded = False  # Is initial padding applied. Used for begin_non_overlap.
 
         # When we have None frame, we need to check if we finished processing
