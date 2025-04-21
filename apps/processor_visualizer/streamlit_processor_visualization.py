@@ -9,8 +9,10 @@ import logging
 import os
 import sys
 import tempfile
+import inspect
+from dataclasses import MISSING, fields, is_dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Tuple, Any, Type, Union, get_type_hints, get_origin, get_args
 
 import cv2
 import hydra
@@ -31,6 +33,16 @@ from src.core.video.frames.readers.video_reader import VideoMetadata, VideoReade
 from src.core.video.frames.processors.frame import ProcessedFrame
 from src.core.video.frames.processors.processor import FrameProcessor
 from src.core.video.frames.processors.visualizer.streamlit_processor_visualizer import StreamlitProcessorVisualizer
+
+# Import processor configs
+from src.structured_configs.processors import (
+    ColorCorrectionProcessorConfig,
+    DenoiseProcessorConfig,
+    UpscaleProcessorConfig,
+    PracticalRIFEFrameInterpolatorConfig,
+    FBCNNProcessorConfig,
+    RealESRGANProcessorConfig,
+)
 
 log = logging.getLogger(__name__)
 
@@ -71,19 +83,212 @@ def get_processors_config() -> Dict:
     return _processor_cfg
 
 
+def get_available_processor_configs() -> Dict[str, Type]:
+    """Get available processor configurations.
+    
+    Returns:
+        Dictionary mapping configuration names to their classes
+    """
+    return {
+        "Color Correction": ColorCorrectionProcessorConfig,
+        "Denoise": DenoiseProcessorConfig,
+        "Upscale": UpscaleProcessorConfig,
+        "RIFE Frame Interpolation": PracticalRIFEFrameInterpolatorConfig,
+        "FBCNN JPEG Artifact Removal": FBCNNProcessorConfig,
+        "RealESRGAN Upscaling": RealESRGANProcessorConfig,
+    }
+
+
+def generate_ui_for_config(config_class: Type, key_prefix: str) -> Dict[str, Any]:
+    """Dynamically generate UI elements based on the dataclass fields.
+    
+    Args:
+        config_class: The dataclass configuration class
+        key_prefix: Prefix for Streamlit widget keys to ensure uniqueness
+        
+    Returns:
+        Dictionary of parameter name to user-selected value
+    """
+    if not is_dataclass(config_class):
+        st.error(f"{config_class.__name__} is not a dataclass")
+        return {}
+    
+    config_params = {}
+    
+    # Get fields from the dataclass
+    dataclass_fields = fields(config_class)
+    type_hints = get_type_hints(config_class)
+    
+    # Skip _target_ field
+    fields_to_display = [f for f in dataclass_fields if f.name != "_target_"]
+    
+    for field in fields_to_display:
+        field_name = field.name
+        field_type = type_hints.get(field_name)
+        default_value = field.default
+        
+        # Skip fields with MISSING default
+        if default_value == MISSING:
+            continue
+            
+        field_help = f"{field_name}: {field_type}"
+        
+        # Check if the field is Optional (Union[X, None])
+        is_optional = False
+        inner_type = field_type
+        
+        if get_origin(field_type) is Union:
+            args = get_args(field_type)
+            if type(None) in args:
+                is_optional = True
+                # Find the non-None type
+                inner_type = next(arg for arg in args if arg is not type(None))
+        
+        # Create a unique key for each widget
+        widget_key = f"{key_prefix}_{field_name}"
+        
+        # Add checkbox for optional fields
+        use_field = True
+        if is_optional:
+            use_field = st.checkbox(f"Use {field_name}", 
+                                    value=default_value is not None,
+                                    key=f"{widget_key}_use",
+                                    help=f"Enable/disable {field_name}")
+        
+        # Skip if optional field is disabled
+        if not use_field:
+            config_params[field_name] = None
+            continue
+            
+        # Generate UI based on field type
+        if inner_type == int:
+            # Determine reasonable min/max values based on field name
+            min_val, max_val, step = 1, 100, 1
+            if "factor" in field_name.lower():
+                min_val, max_val = 1, 8
+            elif "size" in field_name.lower() and "batch" not in field_name.lower():
+                min_val, max_val = 3, 51
+                # Ensure odd values for window sizes
+                if "window" in field_name.lower():
+                    step = 2
+                    min_val = 3
+                    if default_value > min_val:
+                        min_val = default_value - 10
+                    max_val = default_value + 20
+            elif "batch" in field_name.lower():
+                min_val, max_val = 1, 32
+            elif "scale" in field_name.lower():
+                min_val, max_val = 1, 8
+                
+            config_params[field_name] = st.slider(
+                field_name, 
+                min_value=min_val,
+                max_value=max_val,
+                value=default_value,
+                step=step,
+                key=widget_key,
+                help=field_help
+            )
+        
+        elif inner_type == float:
+            # Determine reasonable min/max values based on field name
+            min_val, max_val, step = 0.0, 1.0, 0.01
+            if "strength" in field_name.lower():
+                min_val, max_val = 0.0, 20.0
+                step = 0.5
+            elif "brightness" in field_name.lower():
+                min_val, max_val = -1.0, 1.0
+            elif "contrast" in field_name.lower() or "saturation" in field_name.lower():
+                min_val, max_val = 0.0, 3.0
+            elif "scale" in field_name.lower():
+                min_val, max_val = 0.1, 8.0
+                step = 0.1
+            elif "gamma" in field_name.lower():
+                min_val, max_val = 0.1, 3.0
+                step = 0.1
+            elif "compression" in field_name.lower():
+                min_val, max_val = 0.0, 100.0
+                step = 1.0
+                
+            config_params[field_name] = st.slider(
+                field_name, 
+                min_value=min_val,
+                max_value=max_val,
+                value=default_value if default_value is not None else (min_val + max_val) / 2,
+                step=step,
+                key=widget_key,
+                help=field_help
+            )
+        
+        elif inner_type == bool:
+            config_params[field_name] = st.checkbox(
+                field_name, 
+                value=default_value,
+                key=widget_key,
+                help=field_help
+            )
+        
+        elif inner_type == str:
+            # Handle enum-like string fields
+            if field_name == "interpolation" and config_class == UpscaleProcessorConfig:
+                options = ["nearest", "bilinear", "bicubic", "lanczos"]
+                config_params[field_name] = st.selectbox(
+                    field_name,
+                    options=options,
+                    index=options.index(default_value) if default_value in options else 0,
+                    key=widget_key,
+                    help=field_help
+                )
+            elif field_name == "device":
+                options = ["cuda", "cpu"]
+                config_params[field_name] = st.selectbox(
+                    field_name,
+                    options=options,
+                    index=0 if default_value == "cuda" or default_value is None else 1,
+                    key=widget_key,
+                    help=field_help
+                )
+            else:
+                config_params[field_name] = st.text_input(
+                    field_name, 
+                    value=default_value if default_value is not None else "",
+                    key=widget_key,
+                    help=field_help
+                )
+                # Convert empty string to None for optional fields
+                if config_params[field_name] == "" and is_optional:
+                    config_params[field_name] = None
+        
+        else:
+            # For complex types, just use a text input with JSON representation
+            if default_value is not None:
+                default_str = str(default_value)
+            else:
+                default_str = ""
+            
+            input_value = st.text_input(
+                field_name, 
+                value=default_str,
+                key=widget_key,
+                help=f"{field_help} (advanced)"
+            )
+            
+            # For now, just pass the string representation
+            config_params[field_name] = input_value if input_value else None
+            
+    return config_params
+
 
 @st.cache_resource(max_entries=1)
 def create_processor_instances(cfg: Dict) -> List[FrameProcessor]:
-    """Create an instance of a processor with the given parameters.
+    """Create processor instances from configuration.
     
     Args:
-        processor_class: The processor class to instantiate
-        **kwargs: Parameters to pass to the processor constructor
+        cfg: Configuration dictionary
         
     Returns:
-        An instance of the processor
+        List of processor instances
     """
-    # Filter kwargs to only include those accepted by the constructor
     processors = []
     for processor_name, processor_cfg in cfg["pipeline"]["processor"].items():
         log.info(
@@ -92,46 +297,6 @@ def create_processor_instances(cfg: Dict) -> List[FrameProcessor]:
         processor = hydra.utils.instantiate(processor_cfg)
         processors.append(processor)
     return processors
-
-
-def processor_parameter_ui(processor_name: str) -> Dict[str, Any]:
-    """Generate UI for processor-specific parameters.
-    
-    Args:
-        processor_name: Name of the processor
-        
-    Returns:
-        Dictionary of parameter name to value
-    """
-    params = {}
-    
-    if processor_name == "Color Correction":
-        st.subheader("Color Correction Parameters")
-        params["brightness"] = st.slider("Brightness", -1.0, 1.0, 0.0, 0.05)
-        params["contrast"] = st.slider("Contrast", 0.5, 2.0, 1.0, 0.05)
-        params["saturation"] = st.slider("Saturation", 0.0, 2.0, 1.0, 0.05)
-        params["gamma"] = st.slider("Gamma", 0.5, 2.0, 1.0, 0.05)
-        params["white_balance"] = st.checkbox("Auto White Balance", False)
-        params["auto_exposure"] = st.checkbox("Auto Exposure", False)
-        params["num_workers"] = 1  # Use a single worker for Streamlit demo
-        
-    elif processor_name == "Denoise":
-        st.subheader("Denoise Parameters")
-        params["strength"] = st.slider("Strength", 1, 30, 10, 1)
-        params["num_workers"] = 1  # Use a single worker for Streamlit demo
-        
-    elif processor_name == "Upscale":
-        st.subheader("Upscale Parameters")
-        params["scale_factor"] = st.slider("Scale Factor", 1.0, 4.0, 2.0, 0.5)
-        params["interpolation"] = cv2.INTER_CUBIC
-        params["num_workers"] = 1  # Use a single worker for Streamlit demo
-        
-    elif processor_name == "RIFE Frame Interpolation" and RIFE_AVAILABLE:
-        st.subheader("RIFE Frame Interpolation Parameters")
-        params["model_path"] = st.text_input("Model Path", "weights/practical_rife_4_25")
-        params["scale"] = st.slider("Scale", 0.5, 1.0, 1.0, 0.1)
-        
-    return params
 
 
 def main():
@@ -151,21 +316,31 @@ def main():
     # Sidebar for processor selection
     st.sidebar.title("Processor Configuration")
     
-    # Let user select processors to use
-    # selected_processors = st.sidebar.multiselect(
-    #     "Select Processors",
-    #     list(available_processors.keys()),
-    #     default=["Color Correction"],
-    # )
+    # Get available processor configs
+    available_configs = get_available_processor_configs()
     
-    # # Create processor configuration UI based on selection
-    # processor_params = {}
-    # for processor_name in selected_processors:
-    #     processor_params[processor_name] = processor_parameter_ui(processor_name)
+    # Let user select processors to use
+    selected_processors = st.sidebar.multiselect(
+        "Select Processors",
+        list(available_configs.keys()),
+        default=["FBCNN JPEG Artifact Removal", "Color Correction"]
+    )
+    
+    # Create processor configuration UI based on selection
+    selected_configs = {}
+    for idx, processor_name in enumerate(selected_processors):
+        config_class = available_configs[processor_name]
+        
+        with st.sidebar.expander(f"{processor_name} Settings", expanded=False):
+            st.subheader(f"{processor_name} Parameters")
+            config_params = generate_ui_for_config(config_class, f"proc_{idx}")
+            
+            # Create instance of the config with parameters
+            config_instance = config_class(**config_params)
+            selected_configs[processor_name] = config_instance
     
     # Main area for video/frame display
     upload_col, preview_col = st.columns(2)
-    
     
     video_path = None or "/media/ssd_stuff/video_enhance/out_video/01. Istoriya nachinaetsya_tmp.avi"
     with upload_col:
@@ -209,27 +384,23 @@ def main():
             )
 
     # Process button
-    if st.button("Process Frame"):
-        cfg = get_processors_config()
-        selected_processors = create_processor_instances(cfg)
-        if not selected_processors:
+    if st.button("Process Frame") and selected_configs:
+        if not selected_configs:
             st.warning("Please select at least one processor.")
             return
         
-    #     # Create processor instances based on selections
-    #     processor_instances = []
-    #     for processor_name in selected_processors:
-    #         processor_class = available_processors[processor_name]
-    #         params = processor_params.get(processor_name, {})
-    #         try:
-    #             processor = create_processor_instances(processor_class, **params)
-    #             processor_instances.append(processor)
-    #         except Exception as e:
-    #             st.error(f"Error creating {processor_name} processor: {str(e)}")
-    #             return
+        # Create processor instances based on configurations
+        processor_instances = []
+        for processor_name, config in selected_configs.items():
+            try:
+                processor = hydra.utils.instantiate(config)
+                processor_instances.append(processor)
+                st.success(f"Created {processor_name} processor")
+            except Exception as e:
+                st.error(f"Error creating {processor_name} processor: {str(e)}")
+                return
         
         # Create visualizer and process the frame
-        processor_instances = selected_processors
         visualizer = StreamlitProcessorVisualizer(processor_instances)
         visualizer.reset()
         
@@ -259,16 +430,6 @@ def main():
             st.error(f"Error processing frame: {str(e)}")
             import traceback
             st.code(traceback.format_exc())
-    
-    # # Clean up temporary files on app restart
-    # if 'video_path' in locals() and os.path.exists(video_path):
-    #     try:
-    #         if st.session_state.get('prev_video_path') != video_path:
-    #             if 'prev_video_path' in st.session_state and os.path.exists(st.session_state.prev_video_path):
-    #                 os.unlink(st.session_state.prev_video_path)
-    #             st.session_state.prev_video_path = video_path
-    #     except Exception:
-    #         pass  # Ignore cleanup errors
 
 
 if __name__ == "__main__":

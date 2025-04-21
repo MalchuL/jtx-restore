@@ -28,7 +28,7 @@ class UpscaleProcessor(ParallelProcessor):
         self,
         scale_factor: float = 2.0,
         interpolation: str = "lanczos",
-        num_workers: Optional[int] = None,
+        num_workers: int = 1,
     ):
         """Initialize upscaling processor.
 

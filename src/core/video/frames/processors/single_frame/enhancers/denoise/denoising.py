@@ -29,7 +29,7 @@ class DenoiseProcessor(ParallelProcessor):
         template_window_size: int = 7,
         search_window_size: int = 21,
         use_fast_nl_means: bool = True,
-        num_workers: Optional[int] = None,
+        num_workers: int = 1,
     ):
         """Initialize denoising processor.
 

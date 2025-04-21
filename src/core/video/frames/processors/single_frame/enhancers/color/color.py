@@ -30,7 +30,7 @@ class ColorCorrectionProcessor(ParallelProcessor):
         white_balance: bool = False,
         gamma: float = 1.0,
         auto_exposure: bool = False,
-        num_workers: Optional[int] = None,
+        num_workers: int = 1,
     ):
         """Initialize color correction processor.
 
