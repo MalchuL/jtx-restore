@@ -12,6 +12,9 @@ from typing import Any, Optional, List
 import numpy as np
 from PIL import Image
 
+from src.core.video.frames.processors.single_frame.ai.upscale.models.whole_image_realesrgan import WholeImageRealESRGAN
+
+
 
 # Check for PyTorch
 try:
@@ -52,9 +55,10 @@ class RealESRGANProcessor(AIProcessor):
 
     def __init__(
         self,
-        scale: int = 4,
+        scale: int = 2,
         model_name: Optional[str] = None,
         device: Optional[str] = None,
+        use_whole_image: bool = True,
         batch_size: int = 1,
     ):
         """Initialize RealESRGAN processor.
@@ -64,7 +68,7 @@ class RealESRGANProcessor(AIProcessor):
             model_name: Name of the RealESRGAN model to use
             device: Device to run the model on ('cuda', 'cpu', or None for auto)
             batch_size: Number of frames to process in each batch, but batch means batch size for patching
-
+            use_whole_image: Whether to use the whole image upscaling model
         Raises:
             RuntimeError: If RealESRGAN dependencies are not installed
         """
@@ -86,6 +90,7 @@ class RealESRGANProcessor(AIProcessor):
                 f"Invalid model name: {model_name}. "
                 "Supported models: RealESRGAN_x2, RealESRGAN_x4, RealESRGAN_x8"
             )
+        self.use_whole_image = use_whole_image
         self.upsampler = None
         self.scale = scale
         # Set default device if not specified
@@ -104,7 +109,10 @@ class RealESRGANProcessor(AIProcessor):
         This method loads the model and initializes the RealESRGAN upscaler.
         """
         # Initialize model
-        model = RealESRGAN(self.device, scale=self.scale)
+        if self.use_whole_image:
+            model = WholeImageRealESRGAN(self.device, scale=self.scale)
+        else:
+            model = RealESRGAN(self.device, scale=self.scale)
         model.load_weights(f"weights/{self.model_name}.pth", download=True)
 
         self.upsampler = model

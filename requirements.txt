@@ -4,7 +4,7 @@ torch
 torchvision
 omegaconf>=2.1.0
 pytest>=6.0.0
-# git+https://github.com/doevent/Real-ESRGAN.git
+git+https://github.com/doevent/Real-ESRGAN.git
 rootutils
 rich
 
