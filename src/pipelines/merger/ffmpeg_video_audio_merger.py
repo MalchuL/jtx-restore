@@ -136,8 +136,7 @@ class FFMPEGVideoAudioMerger(VideoAudioMerger):
             return process
         except subprocess.CalledProcessError as e:
             error_msg = e.stderr if e.stderr else "Unknown error"
-            self.logger.error(f"{description} failed: {error_msg}")
-            raise RuntimeError(f"{description} failed: {error_msg}")
+            raise RuntimeError(f"{description} failed: {error_msg}") from e
     
     def check_ffmpeg_capability(self) -> bool:
         """Check if FFMPEG can create videos with the current configuration.
@@ -194,8 +193,7 @@ class FFMPEGVideoAudioMerger(VideoAudioMerger):
                 return True
                 
             except Exception as e:
-                self.logger.error(f"FFMPEG capability check failed: {str(e)}")
-                raise RuntimeError(f"FFMPEG capability check failed: {str(e)}")
+                raise RuntimeError(f"FFMPEG capability check failed: {str(e)}") from e
     
     def validate_inputs(self, video_path: Union[Path, str], audio_path: Union[Path, str]) -> bool:
         """Validate that the input files exist and are of supported formats.

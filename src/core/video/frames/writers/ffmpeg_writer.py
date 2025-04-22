@@ -280,11 +280,13 @@ Or using Scoop:
         if extension in self.DEFAULT_CODECS:
             codec = self.DEFAULT_CODECS[extension]
             if self._is_codec_available(codec):
+                self.logger.info(f"Using codec: {codec} for {extension} extension")
                 return codec
-
+        self.logger.warning(f"No suitable codec found for {extension} extension, trying common codecs")
         # Try common codecs as fallback
         for codec in ["libx264", "libx265", "mpeg4"]:
             if self._is_codec_available(codec):
+                self.logger.info(f"Using codec: {codec} for {extension} extension")
                 return codec
 
         raise ValueError(f"No suitable codec found for {extension} extension")
