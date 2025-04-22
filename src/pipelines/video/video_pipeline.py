@@ -10,6 +10,8 @@ import logging
 from pathlib import Path
 from typing import List, Optional, Sequence
 
+from tqdm import tqdm
+
 from src.core.video.frames.processors.frame_processor_manager import FrameProcessorManager
 from src.core.video.frames.processors.frame import ProcessedFrame
 from src.core.video.frames.readers.video_reader import VideoMetadata, VideoReader
@@ -121,10 +123,11 @@ class DefaultVideoPipeline:
 
         frame_count = 0
         self.logger.info("Starting video processing...")
-
+        
+        pbar = tqdm(total=self.reader.metadata.frame_count, desc="Processing frames")
         while True:
-            
             frame = self.__get_frame()
+            pbar.update(1)
             if frame_count % 50 == 0:
                 self.logger.info(
                     f"Processed {frame_count}/{self.reader.metadata.frame_count} frames"

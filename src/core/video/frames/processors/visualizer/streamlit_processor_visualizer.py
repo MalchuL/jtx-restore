@@ -165,13 +165,20 @@ class StreamlitProcessorVisualizer(FrameProcessorManager):
             
         # Display original frame if provided
         if original_frame is not None:
-            st.subheader("Original Frame")
-            st.image(original_frame.data, channels="RGB", caption=f"Frame ID: {original_frame.frame_id}")
+            col1, col2 = st.columns(2)
             
-            # Show metadata if available
-            if original_frame.metadata:
-                with st.expander("Original Frame Metadata"):
-                    st.json(original_frame.metadata)
+            with col1:
+                st.subheader("Original Frame") 
+                st.image(original_frame.data, channels="RGB", caption=f"Frame ID: {original_frame.frame_id}")
+                
+                # Show metadata if available
+                if original_frame.metadata:
+                    with st.expander("Original Frame Metadata"):
+                        st.json(original_frame.metadata)
+            
+            with col2:
+                st.subheader("Processed Frame")
+                st.image(self.intermediate_results[len(self.processors) - 1][0].data, channels="RGB", caption=f"Frame ID: {original_frame.frame_id}")       
         
         # Display timing summary
         st.subheader("Processing Times")

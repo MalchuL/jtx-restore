@@ -29,7 +29,8 @@ class OpenCVVideoWriter(VideoWriter):
                  fps: float,
                  frame_size: Optional[Tuple[int, int]],
                  codec: Optional[str] = None,
-                 resize_frames: bool = False):
+                 resize_frames: bool = False,
+                 quality: Optional[int] = None):
         """Initialize the OpenCV video writer.
 
         Args:
@@ -41,6 +42,8 @@ class OpenCVVideoWriter(VideoWriter):
                 Defaults to None, which will use default codec based on file extension.
             resize_frames (bool, optional): Whether to resize frames to the specified frame_size.
                 Defaults to True.
+            quality (Optional[int], optional): Video quality setting. Range depends on codec.
+                For most codecs, 0-100 where 100 is highest quality. Defaults to None (let codec decide).
         Raises:
             ValueError: If frame_size is not provided or if the specified codec is not available
             IOError: If the video file cannot be created
@@ -62,6 +65,10 @@ class OpenCVVideoWriter(VideoWriter):
                 raise ValueError(f"Codec '{self._codec}' is not available on this system")
         
         self.resize_frames = resize_frames
+        self.quality = quality
+        if self.quality is not None:
+            if not 0 < self.quality < 100:
+                raise ValueError("Quality must be between 0 and 100")
         # Initialize the video writer
         self._initialize_writer()
         
@@ -136,6 +143,11 @@ class OpenCVVideoWriter(VideoWriter):
 
             if not self._writer.isOpened():
                 raise IOError(f"Failed to open VideoWriter for {self.output_path} with codec {self.codec}")
+                
+            # Set quality parameter if provided
+            if self.quality is not None:
+                # OpenCV property ID for quality
+                self._writer.set(cv2.VIDEOWRITER_PROP_QUALITY, self.quality)
 
         except Exception as e:
             raise IOError(f"Error initializing VideoWriter: {e}")

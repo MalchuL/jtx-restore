@@ -342,7 +342,8 @@ def main():
     # Main area for video/frame display
     upload_col, preview_col = st.columns(2)
     
-    video_path = None or "/media/ssd_stuff/video_enhance/out_video/01. Istoriya nachinaetsya_tmp.avi"
+    video_path = os.environ.get("VIDEO_PATH", None)
+    default_frame_idx = int(os.environ.get("FRAME_IDX", 0))
     with upload_col:
         # File uploader for video
         uploaded_file = st.text_input(
@@ -361,30 +362,31 @@ def main():
         if video_path:
             # Load the selected frame
             metadata = get_video_metadata(video_path)
-            frame_idx = st.slider("Frame", 0, metadata.frame_count -1, 0)
+            frame_idx = st.slider("Frame", 0, metadata.frame_count -1, default_frame_idx)
             set_frame_idx(video_path, frame_idx)
             frame_data = load_video_frame(video_path)
-            
-            # Display frame metadata
-            st.write(f"Frame dimensions: {metadata.width}x{metadata.height}")
-            st.write(f"Video FPS: {metadata.fps:.2f}")
-            st.write(f"Total frames: {metadata.frame_count}")
-            
+            with st.expander("Frame Metadata", expanded=True):
+                
+                # Display frame metadata
+                st.write(f"Frame dimensions: {metadata.width}x{metadata.height}")
+                st.write(f"Video FPS: {metadata.fps:.2f}")
+                st.write(f"Total frames: {metadata.frame_count}")
+                
+                # Display the original frame
+                st.image(
+                    frame_data, 
+                    caption=f"Original Frame (Frame {frame_idx})",
+                    use_container_width=True
+                )
             # Create ProcessedFrame object
             original_frame = ProcessedFrame(
                 data=frame_data,
                 frame_id=frame_idx
             )
             
-            # Display the original frame
-            st.image(
-                frame_data, 
-                caption=f"Original Frame (Frame {frame_idx})",
-                use_column_width=True
-            )
-
+    auto_process = st.checkbox("Auto Process", value=False)
     # Process button
-    if st.button("Process Frame") and selected_configs:
+    if (auto_process or st.button("Process Frame")) and selected_configs:
         if not selected_configs:
             st.warning("Please select at least one processor.")
             return
