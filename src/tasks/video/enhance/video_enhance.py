@@ -62,7 +62,8 @@ class VideoEnhanceTask:
         )
 
     def enhance(self):
-
+        if not os.path.exists(self._video_folder):
+            raise ValueError(f"Video folder {self._video_folder} does not exist")
         if os.path.isdir(self._video_folder):
             iterator = iterate_files_with_creating_structure(
                 self._video_folder,
