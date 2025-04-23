@@ -26,16 +26,16 @@ def register_structured_configs():
     processors_group = "processors"
     
     # Basic processors
-    CS.store(group=processors_group, name="color_correction", node=ColorCorrectionProcessorConfig)
-    CS.store(group=processors_group, name="denoise", node=DenoiseProcessorConfig)
-    CS.store(group=processors_group, name="upscale", node=UpscaleProcessorConfig)
-    CS.store(group=processors_group, name="rife_interpolator", node=PracticalRIFEFrameInterpolatorConfig)
+    # CS.store(group=processors_group, name="base_color_correction", node=ColorCorrectionProcessorConfig)
+    # CS.store(group=processors_group, name="base_denoise", node=DenoiseProcessorConfig)
+    # CS.store(group=processors_group, name="base_upscale", node=UpscaleProcessorConfig)
+    # CS.store(group=processors_group, name="base_rife_interpolator", node=PracticalRIFEFrameInterpolatorConfig)
     
-    # AI processors
-    CS.store(group=processors_group, name="ai_processor", node=AIProcessorConfig)
-    CS.store(group=processors_group, name="apisr_processor", node=APISRProcessorConfig)
-    CS.store(group=processors_group, name="fbcnn_processor", node=FBCNNProcessorConfig)
-    CS.store(group=processors_group, name="realesrgan_processor", node=RealESRGANProcessorConfig)
+    # # AI processors
+    # CS.store(group=processors_group, name="base_ai_processor", node=AIProcessorConfig)
+    # CS.store(group=processors_group, name="base_apisr_processor", node=APISRProcessorConfig)
+    # CS.store(group=processors_group, name="base_fbcnn_processor", node=FBCNNProcessorConfig)
+    # CS.store(group=processors_group, name="base_realesrgan_processor", node=RealESRGANProcessorConfig)
     
     # Register pipeline/task configs
     # task_group = "task"

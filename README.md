@@ -1,30 +1,37 @@
-# JTX Restoration
+# JTX-Restore: Classic Cartoon Restoration Suite
 
-A video processing and restoration framework for enhancing video quality through various processing techniques.
+JTX-Restore is an open-source AI-powered video enhancement framework specifically optimized for classic cartoons and anime. It uses state-of-the-art neural networks to upscale, denoise, and enhance vintage animation without destroying the original artistic style.
 
 ## Features
 
-- **Modular Architecture**: Easily extendable with new video processors
-- **Multiple Enhancement Types**: 
-  - Denoising (single frame and batch processing)
-  - Color correction (sequential and parallel)
-  - Upscaling
-- **Configurable Pipeline**: Use Hydra configuration for easy setup and customization
-- **Efficient Processing**: Supports batch processing and multi-threading
-- **Progress Tracking**: Real-time progress visualization during processing
+- **Multiple AI Processors**: Support for various deep learning models:
+  - **APISR**: Anime Production Inspired Real-world Anime Super-Resolution with multiple model variants (RRDB, GRL, DAT, CUNET)
+  - **RealESRGAN**: Enhanced ESRGAN for realistic texture recreation
+  - **FBCNN**: JPEG artifact removal for compressed sources
+  - **Whole Image Processing**: Option for single-pass upscaling when sufficient GPU memory is available
+  
+- **Video Processing Pipeline**:
+  - Frame-by-frame processing with customizable stages
+  - Automated batch processing of entire directories
+  - Color correction and normalization
+  - RIFE-based frame interpolation
+
+- **User-Friendly Interface**:
+  - Streamlit-based processor visualization for testing and comparing different enhancement techniques
+  - Hydra configuration system for flexible customization
 
 ## Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-username/jtx_restoration.git
-cd jtx_restoration
+git clone https://github.com/yourusername/jtx-restore.git
+cd jtx-restore
 ```
 
-2. Create a virtual environment (recommended):
+2. Create and activate a virtual environment:
 ```bash
-python -m venv env
-source env/bin/activate  # On Windows: env\Scripts\activate
+python -m venv venv
+source venv/bin/activate  # On Windows, use: venv\Scripts\activate
 ```
 
 3. Install dependencies:
@@ -32,122 +39,72 @@ source env/bin/activate  # On Windows: env\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## Usage
-
-### Command-line Interface
-
-The simplest way to use the framework is through the CLI:
-
+4. (Optional) Install additional dependencies for specific processors:
 ```bash
-python src/cli.py reader.source_path=/path/to/input.mp4 writer.output_path=/path/to/output.mp4
+# For APISR and other AI processors
+pip install torch torchvision
+pip install opencv-python einops
 ```
 
-All configuration options can be overridden on the command line using Hydra's dot notation.
+## Running the Streamlit Demo
+
+The Streamlit demo allows you to visualize and test different processors with your own images/videos:
+
+```bash
+cd apps/processor_visualizer
+streamlit run streamlit_processor_visualization.py
+```
+
+This will open a web interface where you can:
+- Upload a video clip
+- Select which processors to apply (APISR, RealESRGAN, FBCNN, etc.)
+- Adjust processor parameters
+- Compare before/after results
+
+## Running the Enhancement Pipeline
+
+To enhance videos using the configured pipeline:
+
+```bash
+python main.py cartoons=jtx video_folder="<path_to_video>" output_folder="<path_to_output>" writer_kwargs.temp_dir="<path_to_tmp_folder>"
+```
+
+Where:
+- `<path_to_video>`: Path to a video file or directory containing videos
+- `<path_to_output>`: Path where enhanced videos will be saved
+- `<path_to_tmp_folder>`: (Optional) Directory for temporary files during processing
 
 ### Configuration
 
-The framework uses Hydra for configuration management. The default configuration is in `configs/video_pipeline.yaml`.
+The project uses Hydra for configuration. You can modify settings in the YAML files located in the `configs/` directory:
 
-You can create your own configuration files or override settings on the command line:
+- `configs/processors/`: Individual processor configurations
+- `configs/pipeline/`: Processing pipeline configurations
+- `configs/cartoons/`: Preset configs for different cartoon styles
 
-```bash
-# Override configuration on the command line
-python src/cli.py reader.type=folder_cache reader.cache_dir=/tmp/cache processing.batch_size=16
+## Implementation Details
 
-# Use a different configuration file
-python src/cli.py --config-name=my_custom_config
-```
+### APISR Processor
 
-#### Example Configuration
+This project includes a fully self-contained implementation of the APISR (Anime Production Inspired Real-world Anime Super-Resolution) models:
 
-```yaml
-# Main pipeline configuration
-reader:
-  type: opencv  # opencv or folder_cache
-  source_path: /path/to/input.mp4
-  cache_dir: null  # Only used with folder_cache reader
+1. **RRDB Models**: Residual-in-Residual Dense Block Networks for 2x and 4x upscaling
+2. **GRL Models**: Gated Residual Layer networks for 4x upscaling
+3. **DAT Models**: Dual Aggregation Transformer networks for 4x upscaling
+4. **CUNET Models**: Real-CUGAN implementation for 2x upscaling
 
-writer:
-  type: opencv
-  output_path: /path/to/output.mp4
-  fps: null  # Uses input fps if null
-  frame_size: null  # Uses input size if null
-  codec: mp4v
+All models are implemented with proper weight loading and include specialized preprocessing to handle various input image sizes and formats.
 
-processing:
-  batch_size: 8
-  max_workers: 4
-  use_threading: true
+### Whole Image Processing
 
-processors:
-  - type: denoise
-    enabled: true
-    params:
-      strength: 10
-      method: fast
-  
-  - type: color_correction
-    enabled: true
-    params:
-      saturation: 1.2
-      contrast: 1.1
-      brightness: 1.0
-  
-  - type: upscale
-    enabled: false
-    params:
-      scale: 2.0
-      model: "realesrgan"
-
-logging:
-  level: INFO
-  log_to_file: false
-  log_file: logs/pipeline.log
-```
-
-## Extending the Framework
-
-### Adding New Processors
-
-To add a new processor:
-
-1. Create a new class that extends `FrameProcessor` or `BatchFrameProcessor`
-2. Implement the required methods (especially `process_frame` or `process_batch_optimized`)
-3. Add your processor to the configuration system in `src/core/pipeline.py`
-
-### Custom Reader or Writer
-
-To add a custom reader or writer:
-
-1. Create a new class that extends `VideoReader` or `VideoWriter`
-2. Implement all required abstract methods
-3. Add your reader/writer to the configuration system in `src/core/pipeline.py`
-
-## Development
-
-### Running Tests
-
-```bash
-pytest
-```
-
-### Code Structure
-
-- `src/core/readers`: Video input modules
-- `src/core/writers`: Video output modules
-- `src/core/processors`: Frame processing modules
-  - `base.py`: Base processor classes
-  - `batch.py`: Batch processing support
-  - `frame.py`: Frame data container
-  - `pipeline.py`: Processor chaining
-  - `enhancers/`: Various enhancement processors
-- `configs/`: Hydra configuration files
-- `tests/`: Unit and integration tests
+For machines with sufficient GPU memory, we've implemented whole-image processing variants for models that traditionally operate on tiles or patches. This can provide better quality for smaller inputs and eliminate potential seam artifacts.
 
 ## License
 
-[MIT License](LICENSE)
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Contributing
+## Acknowledgments
 
-Contributions are welcome! Please feel free to submit a Pull Request. 
+- APISR: [https://github.com/Kiteretsu77/APISR](https://github.com/Kiteretsu77/APISR)
+- Real-ESRGAN: [https://github.com/xinntao/Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN)
+- FBCNN: [https://github.com/jiaxi-jiang/FBCNN](https://github.com/jiaxi-jiang/FBCNN) 

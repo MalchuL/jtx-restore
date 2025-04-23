@@ -1,5 +1,6 @@
 defaults:
-  - task: enhance_video
+  - task: default.yaml
   - paths: default.yaml
   - hydra: default.yaml
+  - cartoons: base.yaml
   
