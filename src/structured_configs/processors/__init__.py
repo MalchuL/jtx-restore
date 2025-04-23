@@ -11,6 +11,7 @@ from src.structured_configs.processors.rife_interpolator import PracticalRIFEFra
 
 # AI processors
 from src.structured_configs.processors.ai_processor import AIProcessorConfig
+from src.structured_configs.processors.apisr_processor import APISRProcessorConfig
 from src.structured_configs.processors.fbcnn_processor import FBCNNProcessorConfig
 from src.structured_configs.processors.realesrgan_processor import RealESRGANProcessorConfig
 
@@ -23,6 +24,7 @@ __all__ = [
     
     # AI processors
     "AIProcessorConfig",
+    "APISRProcessorConfig",
     "FBCNNProcessorConfig",
     "RealESRGANProcessorConfig"
 ] 

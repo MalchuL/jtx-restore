@@ -15,6 +15,7 @@ from src.structured_configs.processors import (
     
     # AI processors
     AIProcessorConfig,
+    APISRProcessorConfig,
     FBCNNProcessorConfig,
     RealESRGANProcessorConfig
 )
@@ -32,6 +33,7 @@ def register_structured_configs():
     
     # AI processors
     CS.store(group=processors_group, name="ai_processor", node=AIProcessorConfig)
+    CS.store(group=processors_group, name="apisr_processor", node=APISRProcessorConfig)
     CS.store(group=processors_group, name="fbcnn_processor", node=FBCNNProcessorConfig)
     CS.store(group=processors_group, name="realesrgan_processor", node=RealESRGANProcessorConfig)
     
@@ -51,6 +53,7 @@ __all__ = [
     
     # AI processors
     "AIProcessorConfig",
+    "APISRProcessorConfig",
     "FBCNNProcessorConfig",
     "RealESRGANProcessorConfig"
 ]

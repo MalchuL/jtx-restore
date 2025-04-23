@@ -10,9 +10,10 @@ import os
 import sys
 import tempfile
 import inspect
+import base64
 from dataclasses import MISSING, fields, is_dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any, Type, Union, get_type_hints, get_origin, get_args
+from typing import Dict, List, Optional, Tuple, Any, Type, Union, get_type_hints, get_origin, get_args, Literal
 
 import cv2
 import hydra
@@ -21,6 +22,7 @@ from omegaconf import DictConfig, OmegaConf
 import rootutils
 import streamlit as st
 from PIL import Image
+import io
 
 root = rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
@@ -40,6 +42,7 @@ from src.structured_configs.processors import (
     DenoiseProcessorConfig,
     UpscaleProcessorConfig,
     PracticalRIFEFrameInterpolatorConfig,
+    APISRProcessorConfig,
     FBCNNProcessorConfig,
     RealESRGANProcessorConfig,
 )
@@ -67,20 +70,20 @@ def load_video_frame(video_path: str) -> np.ndarray:
     frame = reader.read_frame()
     return frame
 
-# Global variable to store the processor config, hydra main will return None
-_processor_cfg = None
+# # Global variable to store the processor config, hydra main will return None
+# _processor_cfg = None
 
-@hydra.main(config_path=str(root / "configs"), version_base="1.3", config_name="main.yaml")
-def set_processors_config(cfg: DictConfig) -> Dict:
-    global _processor_cfg
-    _processor_cfg = OmegaConf.to_container(cfg, resolve=True)
-    print(_processor_cfg, type(_processor_cfg))
+# @hydra.main(config_path=str(root / "configs"), version_base="1.3", config_name="main.yaml")
+# def set_processors_config(cfg: DictConfig) -> Dict:
+#     global _processor_cfg
+#     _processor_cfg = OmegaConf.to_container(cfg, resolve=True)
+#     print(_processor_cfg, type(_processor_cfg))
     
-@st.cache_resource(max_entries=1)
-def get_processors_config() -> Dict:
-    if _processor_cfg is None:
-        set_processors_config()
-    return _processor_cfg
+# @st.cache_resource(max_entries=1)
+# def get_processors_config() -> Dict:
+#     if _processor_cfg is None:
+#         set_processors_config()
+#     return _processor_cfg
 
 
 def get_available_processor_configs() -> Dict[str, Type]:
@@ -94,6 +97,7 @@ def get_available_processor_configs() -> Dict[str, Type]:
         "Denoise": DenoiseProcessorConfig,
         "Upscale": UpscaleProcessorConfig,
         "RIFE Frame Interpolation": PracticalRIFEFrameInterpolatorConfig,
+        "APISR Anime Upscaling": APISRProcessorConfig,
         "FBCNN JPEG Artifact Removal": FBCNNProcessorConfig,
         "RealESRGAN Upscaling": RealESRGANProcessorConfig,
     }
@@ -143,6 +147,12 @@ def generate_ui_for_config(config_class: Type, key_prefix: str) -> Dict[str, Any
                 is_optional = True
                 # Find the non-None type
                 inner_type = next(arg for arg in args if arg is not type(None))
+        
+        # Check if the field is a Literal type
+        literal_values = None
+        if get_origin(inner_type) is Literal:
+            literal_values = get_args(inner_type)
+            inner_type = type(literal_values[0]) if literal_values else str
         
         # Create a unique key for each widget
         widget_key = f"{key_prefix}_{field_name}"
@@ -230,7 +240,18 @@ def generate_ui_for_config(config_class: Type, key_prefix: str) -> Dict[str, Any
         
         elif inner_type == str:
             # Handle enum-like string fields
-            if field_name == "interpolation" and config_class == UpscaleProcessorConfig:
+            if literal_values:
+                # For Literal types, create a selectbox with the allowed values
+                options = [str(val) for val in literal_values]
+                default_index = options.index(str(default_value)) if str(default_value) in options else 0
+                config_params[field_name] = st.selectbox(
+                    field_name,
+                    options=options,
+                    index=default_index,
+                    key=widget_key,
+                    help=field_help
+                )
+            elif field_name == "interpolation" and config_class == UpscaleProcessorConfig:
                 options = ["nearest", "bilinear", "bicubic", "lanczos"]
                 config_params[field_name] = st.selectbox(
                     field_name,
@@ -323,7 +344,7 @@ def main():
     selected_processors = st.sidebar.multiselect(
         "Select Processors",
         list(available_configs.keys()),
-        default=["FBCNN JPEG Artifact Removal", "Color Correction"]
+        default=["APISR Anime Upscaling"]
     )
     
     # Create processor configuration UI based on selection
@@ -432,6 +453,7 @@ def main():
             st.error(f"Error processing frame: {str(e)}")
             import traceback
             st.code(traceback.format_exc())
+            raise e
 
 
 if __name__ == "__main__":

@@ -16,3 +16,4 @@ input/
 output_directory/
 .stuff/
 logs/
+third_party/
