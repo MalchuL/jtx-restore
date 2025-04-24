@@ -159,7 +159,6 @@ class RealESRGANProcessor(AIProcessor):
         Returns:
             List of model outputs
         """
-        print(len(inputs))
         if self.use_whole_image:
             outputs = self.upsampler.predict(inputs)
         else:
