@@ -216,7 +216,6 @@ def super_resolve_img(
     output_path=None,
     weight_dtype=torch.float32,
     downsample_threshold=720,
-    crop_for_4x=True,
 ):
     """Super-resolve an image using the given model.
 
@@ -231,6 +230,9 @@ def super_resolve_img(
     Returns:
         Super-resolved image tensor
     """
+    if downsample_threshold > 720:
+        raise ValueError(f"Downsample threshold is too large: {downsample_threshold}. Max allowed is 720.")
+    
     # Set model to appropriate device and datatype
     device = next(model.parameters()).device
     model = model.to(device=device, dtype=weight_dtype)
@@ -238,12 +240,6 @@ def super_resolve_img(
     # Process input image
     img_tensor = process_image(img_input, downsample_threshold)
 
-    # For 4x scaling, crop to ensure dimensions are divisible by 4
-    if crop_for_4x and hasattr(model, "upscale") and model.upscale == 4:
-        _, h, w = img_tensor.shape
-        h = h - h % 4
-        w = w - w % 4
-        img_tensor = img_tensor[:, :h, :w]
 
     # Convert to batch and move to device
     input_tensor = img_tensor.unsqueeze(0).to(device=device, dtype=weight_dtype)

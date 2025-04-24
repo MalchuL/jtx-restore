@@ -1,7 +1,7 @@
 """
-Utility modules for video processing.
+Utility functions and classes for video frame processing.
 
-This package contains utility classes and functions used across
-the video processing framework.
+This package contains various utility classes and functions used across
+the video frame processing pipeline.
 """
 

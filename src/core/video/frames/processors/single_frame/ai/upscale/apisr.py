@@ -45,6 +45,7 @@ from src.core.video.frames.processors.single_frame.ai.ai_processor import AIProc
 from src.core.video.frames.processors.single_frame.ai.upscale.models.apisr_models import (
     super_resolve_img, load_rrdb, load_grl, load_dat, 
 )
+from src.core.video.frames.utils.padder import Padder
 
 class APISRProcessor(AIProcessor):
     """Frame processor using APISR for upscaling.
@@ -89,7 +90,6 @@ class APISRProcessor(AIProcessor):
         use_custom_model: bool = False,
         custom_model_path: Optional[str] = None,
         downsample_threshold: int = 720,
-        crop_for_4x: bool = True,
     ):
         """Initialize APISR processor.
 
@@ -99,7 +99,6 @@ class APISRProcessor(AIProcessor):
             use_custom_model: Whether to use a custom model instead of the pretrained ones
             custom_model_path: Path to a custom model checkpoint (used only if use_custom_model is True)
             downsample_threshold: Images with height or width above this value will be downsampled
-            crop_for_4x: Whether to crop images to ensure dimensions are divisible by the scale factor
         Raises:
             RuntimeError: If APISR dependencies are not installed
         """
@@ -121,7 +120,6 @@ class APISRProcessor(AIProcessor):
         self.use_custom_model = use_custom_model
         self.custom_model_path = custom_model_path
         self.downsample_threshold = downsample_threshold
-        self.crop_for_4x = crop_for_4x
         
         # Extract scale from model type
         self.scale = self.MODELS[model_name]["scale"]
@@ -133,7 +131,10 @@ class APISRProcessor(AIProcessor):
         # Store model reference
         self.generator = None
         self.weight_dtype = torch.float32
-                    
+        
+        # Store the current padder instance for each processed frame
+        self.current_padder = Padder(mod_pad=32, pad_size=15, scale_factor=self.scale)                    
+        
         super().__init__(
             model_name=model_name, device=device, batch_size=1
         )
@@ -203,7 +204,12 @@ class APISRProcessor(AIProcessor):
         else:
             frame_data = frame.data
             
-        return frame_data
+        # Apply padding to make image dimensions divisible by 32
+        # Using hardcoded values: mod_pad=32, pad_size=15
+        
+        padded_data = self.current_padder.pad_image(frame_data)
+        
+        return padded_data
 
     def _postprocess(self, model_output: Any) -> np.ndarray:
         """Postprocess APISR output into a frame.
@@ -219,6 +225,9 @@ class APISRProcessor(AIProcessor):
             result = model_output.clamp(0, 1).mul(255).byte().permute(1, 2, 0).cpu().numpy()
         else:
             result = model_output
+            
+        # Remove padding if padder is available
+        result = self.current_padder.unpad_image(result)
             
         return result
 
@@ -240,7 +249,6 @@ class APISRProcessor(AIProcessor):
                 output_path=None,
                 weight_dtype=self.weight_dtype,
                 downsample_threshold=self.downsample_threshold,
-                crop_for_4x=self.crop_for_4x
             )
             
             # Convert to numpy and prepare output
