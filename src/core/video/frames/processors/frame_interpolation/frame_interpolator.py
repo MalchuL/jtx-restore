@@ -210,7 +210,7 @@ class FrameInterpolator(FrameProcessor):
                 )
             if frame.data is None:
                 raise ValueError("Interpolated frame data is None")
-        return ProcessorResult(frames=processed_frames, ready=True)
+        return ProcessorResult(frames=processed_frames, ready=len(processed_frames) > 0)
 
     def _do_finish(self) -> ProcessorResult:
         remaining_frames = self._cutter.get_remaining_windows()
