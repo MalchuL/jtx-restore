@@ -99,8 +99,9 @@ class RealESRGANProcessor(AIProcessor):
         device = torch.device(device)
 
         self._num_patches = batch_size  # Number of patches to process in each batch
+        bs = batch_size if self.use_whole_image else 1
         super().__init__(
-            model_name=model_name, device=device, batch_size=1
+            model_name=model_name, device=device, batch_size=bs
         )
 
     def _load_model(self) -> None:
@@ -144,7 +145,7 @@ class RealESRGANProcessor(AIProcessor):
             Processed frame data as numpy array
         """
         # RealESRGAN outputs BGR format
-        assert isinstance(model_output, Image.Image)
+        assert isinstance(model_output, Image.Image), f"Model output is not an instance of Image.Image, but {type(model_output)}"
         out = np.array(model_output)
 
         return out
@@ -158,11 +159,16 @@ class RealESRGANProcessor(AIProcessor):
         Returns:
             List of model outputs
         """
-        outputs = []
-        for img in inputs:
-            # RealESRGAN processes one image at a time
-            output = self.upsampler.predict(img, batch_size=self._num_patches)
-            outputs.append(output)
+        print(len(inputs))
+        if self.use_whole_image:
+            outputs = self.upsampler.predict(inputs)
+        else:
+            outputs = []
+            for img in inputs:
+                # RealESRGAN processes one image at a time
+                output = self.upsampler.predict(img, batch_size=self._num_patches)
+                outputs.append(output)
+        assert len(outputs) == len(inputs), f"Number of outputs is not equal to number of inputs, got {len(outputs)} and {len(inputs)}"
         return outputs
 
     def update_processor_info(self, processor_info: ProcessorInfo) -> ProcessorInfo:
