@@ -14,7 +14,7 @@ from src.structured_configs.processors.ai_processor import AIProcessorConfig
 from src.structured_configs.processors.apisr_processor import APISRProcessorConfig
 from src.structured_configs.processors.fbcnn_processor import FBCNNProcessorConfig
 from src.structured_configs.processors.realesrgan_processor import RealESRGANProcessorConfig
-
+from src.structured_configs.processors.spandrel_processor import SpandrelProcessorConfig
 __all__ = [
     # Basic processors
     "ColorCorrectionProcessorConfig",
@@ -26,5 +26,6 @@ __all__ = [
     "AIProcessorConfig",
     "APISRProcessorConfig",
     "FBCNNProcessorConfig",
-    "RealESRGANProcessorConfig"
+    "RealESRGANProcessorConfig",
+    "SpandrelProcessorConfig",
 ] 

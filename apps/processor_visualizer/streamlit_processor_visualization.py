@@ -45,6 +45,7 @@ from src.structured_configs.processors import (
     APISRProcessorConfig,
     FBCNNProcessorConfig,
     RealESRGANProcessorConfig,
+    SpandrelProcessorConfig,
 )
 
 log = logging.getLogger(__name__)
@@ -100,6 +101,7 @@ def get_available_processor_configs() -> Dict[str, Type]:
         "APISR Anime Upscaling": APISRProcessorConfig,
         "FBCNN JPEG Artifact Removal": FBCNNProcessorConfig,
         "RealESRGAN Upscaling": RealESRGANProcessorConfig,
+        "Spandrel Models": SpandrelProcessorConfig,
     }
 
 
