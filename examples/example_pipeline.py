@@ -13,13 +13,14 @@ import logging
 from pathlib import Path
 from typing import List
 
-from src.core.video.pipeline.opencv_ffmpeg_pipeline import OpenCVFFmpegPipeline
-from src.core.video.processors.enhancers import (
+from src.pipelines.video.opencv_ffmpeg_pipeline import OpenCVFFmpegPipeline
+from src.core.video.frames.processors import (
     ColorCorrectionProcessor,
     DenoiseProcessor,
+    RealESRGANProcessor,
+    FrameProcessor,
 )
-from src.core.video.processors.ai.upscale.realesrgan import RealESRGANProcessor
-from src.core.video.processors.processor import FrameProcessor
+from src.core.video.frames.processors import FBCNNProcessor
 
 logging.basicConfig(level=logging.INFO)
 
@@ -32,14 +33,7 @@ def create_processor_pipeline() -> List[FrameProcessor]:
     """
     return [
         # Denoise the video to remove noise and artifacts
-        DenoiseProcessor(
-            strength=10.0,
-            color_strength=10.0,
-            template_window_size=7,
-            search_window_size=21,
-            use_fast_nl_means=True,
-            num_workers=12,  # Use 4 worker processes for parallel processing
-        ),
+        FBCNNProcessor(),
         # Upscale the video using RealESRGAN
         RealESRGANProcessor(
             scale=2,  # 4x upscaling
@@ -75,8 +69,6 @@ def main():
         input_path=args.input_path,
         output_path=args.output_path,
         processors=create_processor_pipeline(),
-        batch_size=12,
-        upscale_coefficient=2.0,  # Match RealESRGAN's 4x upscaling
     )
 
     # Process the video

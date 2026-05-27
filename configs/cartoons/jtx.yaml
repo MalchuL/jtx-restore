@@ -1,0 +1,7 @@
+# @package _global_
+# JTX Cartoon Restoration Configuration
+
+defaults:
+  - base.yaml
+  - override /pipeline/processor: [rife_interpolator, apisr_2x]
+  - override /task: enhance_video

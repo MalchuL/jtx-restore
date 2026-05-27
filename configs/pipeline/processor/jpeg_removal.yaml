@@ -1,0 +1,2 @@
+jpeg_removal:
+  _target_: src.core.video.frames.processors.FBCNNProcessor

@@ -11,8 +11,8 @@ from typing import List
 import numpy as np
 import pytest
 
-from src.core.video.writers.ffmpeg_writer import FFmpegVideoWriter
-from src.core.video.types import FrameType
+from src.core.video.frames.writers.ffmpeg_writer import FFmpegVideoWriter
+from src.core.video.frames.types import FrameType
 
 
 def create_test_frame(width: int = 640, height: int = 480) -> np.ndarray:

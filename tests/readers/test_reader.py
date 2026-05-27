@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 from pathlib import Path
 from typing import NamedTuple
 
-from src.core.video.readers.video_reader import VideoMetadata, VideoReader
+from src.core.video.frames.readers.video_reader import VideoMetadata, VideoReader
 
 
 

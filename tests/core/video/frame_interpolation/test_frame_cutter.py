@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
-from src.core.video.processors.frame import ProcessedFrame
-from src.core.video.utils.frame_cutter import FrameCutter, CutterWindow
+from src.core.video.frames.processors.frame import ProcessedFrame
+from src.core.video.frames.utils.frame_cutter import FrameCutter, CutterWindow
 
 
 def create_test_frame(frame_id: int) -> ProcessedFrame:

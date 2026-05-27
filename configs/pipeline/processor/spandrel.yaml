@@ -1,0 +1,44 @@
+# Example configuration for Spandrel processor
+#
+# Spandrel is a powerful library that provides a unified interface for various
+# AI upscaling models like Real-ESRGAN, ESRGAN, SwinIR, etc.
+#
+# Download models from:
+# - https://openmodeldb.info/models/4x-HFA2kLUDVAEGRL-small
+
+spandrel_processor:
+  _target_: src.core.video.frames.processors.single_frame.ai.upscale.spandrel_processor.SpandrelProcessor
+
+  # Path to the model file (customize this to your local model path)
+  model_path: "/path/to/your/model.pth"  # Replace with actual model path
+
+  # Processing device
+  device: "cuda"  # Use "cpu" for CPU processing
+
+  # Batch processing parameters
+  batch_size: 4  # Number of frames to process simultaneously (increase for better throughput)
+                # Note: Higher batch sizes require more GPU memory
+
+  # Optional: specify the model type explicitly if auto-detection fails
+  # Supported types: realesrgan, esrgan, swinir, restormer, hat, dat, omnisr, span, srvgg, rrdb
+  model_type: null  # null = auto-detect
+
+  # Examples of popular models:
+  # 
+  # 1. For anime/cartoon upscaling:
+  #    - model_path: "realesrgan-x4plus-anime.pth"
+  #    - model_type: "realesrgan"
+  #
+  # 2. For general-purpose photo upscaling:
+  #    - model_path: "realesrgan-x4plus.pth"
+  #    - model_type: "realesrgan"
+  # 
+  # 3. For high-quality photo upscaling (slower):
+  #    - model_path: "swinir_real_large_x4_gaussian.pth"
+  #    - model_type: "swinir"
+  #
+  # More models can be found in the Spandrel-compatible models collection on Hugging Face.
+
+  # Performance tips:
+  # - For processing multiple frames, increase batch_size for better throughput
+  # - The processor will automatically fall back to sequential processing if it runs out of GPU memory 
